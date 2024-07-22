@@ -23,6 +23,9 @@ class CreateUser(BaseModel):
 class ReturnSignUpUser(BaseModel):
     email: EmailStr
     password: SecretStr
+    gender : str
+    status: str
+    user_type : str
 
 class ProtectedRoutes(BaseModel):
     pass

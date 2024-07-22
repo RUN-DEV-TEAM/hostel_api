@@ -14,7 +14,6 @@ router = APIRouter()
 @router.post("/token", response_model=Token)
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(),  session: async_sessionmaker = Depends(get_session)):
     user = await endpoint_helper.authenticate_user(form_data.username, form_data.password, session)
-    if user["req_status"] == "nok":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=user, headers= {"www-Authenticate": "Bearer"})
-
-    return {"access_token": user["token"], "token_type": "bearer"}
+    if not user[0]:
+            return JSONResponse(status_code=404, content=user[1]) 
+    return {"access_token": user[1]["token"], "token_type": "bearer"}

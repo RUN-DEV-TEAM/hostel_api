@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, text, ForeignKey,Enum,
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.connection import Base
-from schemas.helperSchema import RoomCondition,RoomStatus,RoomType,Deleted,Gender,BlockStatus,UserStatus
+from schemas.helperSchema import RoomCondition,RoomStatus,RoomType,Deleted,Gender,BlockStatus,UserStatus,UserType
 from pydantic import ValidationError
 # from models.studentModel import StudentModel
 
@@ -13,6 +13,8 @@ class UserModel(Base):
     email = Column(String(45),  unique=True, index=True,nullable=False)
     password = Column(String(191), nullable=False)
     status = Column(Enum(UserStatus), default=UserStatus.INACTIVE)
+    gender = Column(Enum(Gender), default=Gender.M)
+    user_type = Column(Enum(UserType), default=UserType.PORTAL)
     deleted = Column(Enum(Deleted), default=Deleted.N)
     created_at = Column(DateTime, server_default= text('CURRENT_TIMESTAMP'))
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
@@ -46,7 +48,7 @@ class RoomModel(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     rooms_name = Column(String(45), nullable=False)
     capacity = Column(Integer, nullable=False)
-    room_type = Column(Enum(RoomType), default=RoomType.CORNER)
+    room_type = Column(Enum(RoomType), default=RoomType.NORMAL)
     block_id = Column(Integer, ForeignKey('t_blocks.id'), nullable=False)
     room_status = Column(Enum(RoomStatus), default=RoomStatus.AVAILABLE)
     room_condition = Column(Enum(RoomCondition), default=RoomCondition.GOOD)

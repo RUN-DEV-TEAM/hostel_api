@@ -1,6 +1,24 @@
 from pydantic import BaseModel, EmailStr, constr,field_validator
 from datetime import datetime   
 from schemas.helperSchema import Gender,BlockStatus,Deleted
+from typing import List
+
+
+class BlockRoomSchema(BaseModel):
+    block_name : str
+    description : str
+    gender : Gender 
+    num_rooms_in_block: int
+    num_of_allocated_rooms : int = 0
+    num_norm_rooms_in_block : int = 0
+    norm_room : List[dict] = {}
+    num_corn_rooms_in_block : int = 0
+    corner_room : List[dict] = {}
+    block_status : BlockStatus
+    deleted : Deleted
+
+
+
 
 
 class BlockSchema(BaseModel):
@@ -45,3 +63,11 @@ class CustomValidationError(Exception):
 
     def __str__(self):
         return f"{self.name}: {self.message}"
+    
+
+
+class GetRoomStat(BaseModel):
+    female_norm_room: int = 0
+    female_c_room : int = 0
+    male_norm_room : int = 0
+    male_c_room : int = 0

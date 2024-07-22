@@ -15,6 +15,11 @@ class UserStatus(Enum):
     ACTIVE = 'ACTIVE'
     INACTIVE = 'INACTIVE'
 
+    
+class UserType(Enum):
+    ADMIN = 'ADMIN'
+    PORTAL = 'PORTAL'
+
 # room_status
 class RoomStatus(Enum):
     OCCUPIED = "OCCUPIED"

@@ -67,13 +67,12 @@ def build_response_dict_for_null_response(schema):
 
 async def authenticate_user(email:str, password:str,  session: async_sessionmaker):
     user = await admin_service.get_user_4_auth_by_email_service(email, session)
-    if not user:
-        return  {"message": f"User with the email {email} does not exist in our database", "req_status":"nok"}
-    if "error" in user:
-        return  JSONResponse(status_code=404, content=user)   
+    if not user[0]:
+        return False, {"message": f"User with the email {email} does not exist in our database"}
+    user = user[1]
     if not verify_password(password, user["password"]):
-        return {"message": "Invalid Email/Password supplied!", "req_status":"nok"}
-    user.update({"token": create_access_token(data={"sub":user["email"]},expires_delta=30), "req_status":"ok"})
-    return user 
+        return False,{"message": "Invalid Email/Password supplied!"}
+    user.update({"token": create_access_token(data={"sub":user["email"]},expires_delta=30)})
+    return True,user 
 
 

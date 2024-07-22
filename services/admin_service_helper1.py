@@ -1,6 +1,8 @@
 from datetime import datetime
-from services import service_obj
 
+
+def check_for_norm_3_or_corn_4_room(room):
+    pass
 
 def build_response_dict(db_response, schema):
     response_dict = {}
@@ -12,7 +14,6 @@ def build_response_dict(db_response, schema):
                 response_dict[field_name] = getattr(db_response, field_name)
     except KeyError:
         return False
-        # raise HTTPException(status_code=400, detail=f"Dict key {field_name} doest not exist in {db_response}")
     else:
         return response_dict
     

@@ -61,3 +61,9 @@ async def get_all_available_rooms_from_selected_block(block_id:int, session: asy
     return JSONResponse(status_code=404, content={"message": res[1]})  
   elif res[0]:
     return res[1]
+  
+
+  # 
+@router.get("/list_of_students_with_accomodation_in_session")
+async def list_of_students_with_accomodation_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  pass

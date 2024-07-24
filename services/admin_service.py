@@ -14,20 +14,20 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 
 async def sign_up_service(user_create:CreateUser, session:async_sessionmaker) -> ListUser:
    user_create = user_create.model_dump()
-   user_create["password"] = endpoint_helper.get_password_hashed(user_create["password"])
-   if verify_supplied_email_from_staff_portal(user_create["email"]):
-       _user = UserModel(**user_create)
+   status,data = verify_supplied_email_from_staff_portal(user_create["email"],user_create["password"])
+   if status:
        try:
+            user_create["password"] = endpoint_helper.get_password_hashed(user_create["password"])
+            _user = UserModel(**user_create)
             session.add(_user)
             await session.commit()
             await session.refresh(_user)
+            return True,admin_service_helper1.build_response_dict(_user,ReturnSignUpUser)
        except Exception as e:
             await session.rollback()
-            raise HTTPException(status_code=400, detail=str(e))
-       return True,admin_service_helper1.build_response_dict(_user,ReturnSignUpUser)
+            return False, {"message":"Error creating user, maybe duplicate entry for email"}
    else:
-       return False, {"message": f"No record found for {user_create['email']} from the staff portal"}
-
+       return False, data
 
 
 async def list_user_service(session:async_sessionmaker) -> List[ListUser]:

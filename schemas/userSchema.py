@@ -16,8 +16,8 @@ class CreateUser(BaseModel):
 
     @field_validator('password')
     def password_length_check(cls, v):
-        if len(v) < 8:
-            raise ValueError("Password must be at least 8 characters long")
+        if len(v) < 6:
+            raise ValueError("Password must be at least 6 characters long")
         return v
 
 class ReturnSignUpUser(BaseModel):

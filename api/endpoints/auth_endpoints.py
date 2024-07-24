@@ -11,11 +11,11 @@ router = APIRouter()
 
 @router.post("/sign_up",response_model=ReturnSignUpUser)
 async def sign_up(user: CreateUser, session: async_sessionmaker = Depends(get_session)):
-  service_resp = await admin_service.sign_up_service(user,session)
-  if not service_resp[0]:
-    return JSONResponse(status_code=404, content=service_resp[1])
-  elif service_resp[0]:
-    return service_resp[1]
+  status,data = await admin_service.sign_up_service(user,session)
+  if not status:
+    return JSONResponse(status_code=404, content=data)
+  elif status:
+    return data
 
 
 # AUTH START

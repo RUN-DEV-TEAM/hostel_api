@@ -10,7 +10,35 @@ class RoomSchema(BaseModel):
     capacity : str 
     room_type: str
     block_id : int 
+    block_name : str
+    room_status : str
+    room_condition : str
+    
+    
+
+
+class RoomSchemaDetailed(BaseModel):
+    id : int
+    rooms_name : str
+    capacity : str 
+    room_type: str
+    block_id : int 
+    block_name : str
+    num_rooms_in_block:int
+    num_of_allocated_rooms:int
+    gender: str
     room_status : str
     room_condition : str
 
 
+
+# class RoomAllocationParamSchema(BaseModel):
+#     matric_number:str
+#     room_id:int
+#     acad_session:str
+
+
+class RoomAllocationResponseSchema(BaseModel):
+    matric_number:str
+    room_id:int
+    acad_session:str

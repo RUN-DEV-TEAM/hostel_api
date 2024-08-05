@@ -1,11 +1,14 @@
 from typing import List
 from fastapi import HTTPException
 from sqlalchemy.future import select
+from sqlalchemy import func
 from models.userModel import UserModel,BlockModel,RoomModel
 from schemas.userSchema import CreateUser,ListUser,ReturnSignUpUser,ListUser2
 from schemas.blockSchemas import BlockSchema,GetRoomStat
-from schemas.roomSchema import RoomSchema
+from schemas.roomSchema import RoomSchema,RoomSchemaDetailed
+from schemas.helperSchema import Gender
 from services import admin_service_helper1
+from services import admin_service_helper2
 from api.endpoints import endpoint_helper
 from services.external_services import verify_supplied_email_from_staff_portal
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -45,9 +48,11 @@ async def get_user_by_email_service(email:str, session:async_sessionmaker) -> Li
    return admin_service_helper1.build_response_dict(user,ListUser)
      
 
+
 async def get_user_4_auth_by_email_service(email:str, session:async_sessionmaker):
    try:
-       result = await session.execute(select(UserModel.id, UserModel.email,UserModel.password,UserModel.status,UserModel.created_at,
+       result = await session.execute(select(UserModel.id, UserModel.email,UserModel.password,UserModel.status,
+                                             UserModel.gender,UserModel.user_type,UserModel.created_at,
                                         UserModel.updated_at ).where(UserModel.email == email))
        user = result.fetchone()
        if not user:
@@ -120,7 +125,7 @@ async def get_all_available_rooms_from_selected_block_service(block_id:int, sess
    try:
        result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
                                        RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
-                                       ).where(RoomModel.block_id == block_id,RoomModel.room_status =='AVAILABLE',RoomModel.deleted == 'N'))
+                                       ).where(RoomModel.block_id == block_id,RoomModel.room_status =='AVAILABLE',RoomModel.room_condition =='GOOD',RoomModel.deleted == 'N'))
        room_list = result.all()
        resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
    except:
@@ -129,6 +134,81 @@ async def get_all_available_rooms_from_selected_block_service(block_id:int, sess
        return True,resp
 
 
+
+async def get_all_occupied_rooms_from_selected_block_service(block_id:int, session:async_sessionmaker):
+   try:
+       result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
+                                       RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
+                                       ).where(RoomModel.block_id == block_id,RoomModel.room_status =='OCCUPIED',RoomModel.deleted == 'N'))
+       room_list = result.all()
+       resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
+   except:
+       return False, {"message":"Error fetching all available in block rooms given block ID"}
+   else:
+       return True,resp
+
+
+
+async def random_assign_room_to_student_in_session_service(mat_no:str,gender:Gender, session:async_sessionmaker):
+    curr_session = '2023/2024'
+    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
+    if not check_for_stud_room[0]:
+        get_room = await admin_service_helper2.get_random_available_room(gender, curr_session,session)
+        if get_room[0]:
+            allo_room = await admin_service_helper2.room_allocation_service(mat_no,get_room[1]['id'],get_room[1]['block_id'],
+                                                                            get_room[1]['num_rooms_in_block'], get_room[1]['num_of_allocated_rooms'],
+                                                                            curr_session,get_room[1]['capacity'],session)
+            if allo_room:
+                return True,allo_room[1]
+        else:
+            return False, get_room[1] 
+    else:
+        return True, check_for_stud_room[1]
+    
+
+
+async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,gender:Gender,block_id:int, session:async_sessionmaker):
+    curr_session = '2023/2024'
+    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
+    if not check_for_stud_room[0]:
+        get_room = await admin_service_helper2.get_specific_available_room_in_block(gender, curr_session,block_id,session)
+        if get_room[0]:
+            allo_room = await admin_service_helper2.room_allocation_service(mat_no,get_room[1]['id'],get_room[1]['block_id'],
+                                                                            get_room[1]['num_rooms_in_block'], get_room[1]['num_of_allocated_rooms'],
+                                                                            curr_session,get_room[1]['capacity'],session)
+            if allo_room:
+                return True,allo_room[1]
+        else:
+            return False, get_room[1] 
+    else:
+        return True, check_for_stud_room[1]
+
+
+
+
+
+
+
+#  (
+#         select(User, Profile)
+#         .join(Profile, User.id == Profile.user_id)
+#         .where(Profile.bio.ilike(f'%{keyword}%'))
+#         .order_by(func.random())
+#         .limit(1)
+#     )
+#    try:
+#        result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
+#                                        RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
+#                                        ).where(RoomModel.block_id == block_id,RoomModel.room_status =='OCCUPIED',RoomModel.deleted == 'N'))
+#        room_list = result.all()
+#        resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
+#    except:
+#        return False, {"message":"Error fetching all available in block rooms given block ID"}
+#    else:
+#        return True,resp
+   
+
+# 
 # session.query(UserModel).filter_by(email=email).first()
 # session.query(UserModel.id).filter_by(email=email).scalar_one_or_none()
 # scalar_one_or_none()

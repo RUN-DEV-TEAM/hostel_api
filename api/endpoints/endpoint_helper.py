@@ -27,7 +27,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_
             raise credential_exception
     except:
         raise credential_exception
-    user = admin_service.get_user_4_auth_by_email_service(email, session)
+    user = await admin_service.get_user_4_auth_by_email_service(email, session)
     if user is None:
         raise credential_exception
     return user

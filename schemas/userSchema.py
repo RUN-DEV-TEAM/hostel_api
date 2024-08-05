@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, constr,field_validator
 from pydantic.types import SecretStr
+from schemas.helperSchema import Gender
 from datetime import datetime
 
 
@@ -25,7 +26,7 @@ class ReturnSignUpUser(BaseModel):
     password: SecretStr
     gender : str
     status: str
-    user_type : str
+    user_type : str 
 
 class ProtectedRoutes(BaseModel):
     pass
@@ -45,6 +46,8 @@ class ListUser2(BaseModel):
     email: EmailStr 
     password: str
     status :str
+    user_type: str
+    gender: str
     created_at : str 
     updated_at: str
 
@@ -59,8 +62,21 @@ class GetAuthUser(BaseModel):
     updated_at: str
 
 
-class Token(BaseModel):
+
+class AuthUser(BaseModel):
+    email : EmailStr
+    user_type: str
+    gender: str
+
+
+class ResponseToken(BaseModel):
     access_token: str
     token_type: str
+    user : AuthUser
 
 
+
+
+class LoginUser(BaseModel):
+    email: EmailStr
+    password: str

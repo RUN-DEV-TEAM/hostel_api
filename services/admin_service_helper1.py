@@ -1,4 +1,5 @@
 from datetime import datetime
+from schemas.helperSchema import Gender
 
 
 def check_for_norm_3_or_corn_4_room(room):
@@ -42,3 +43,13 @@ def validate_input_num_of_room_in_block(input):
    else:
        msg = 'Success'
        return True,msg
+
+
+
+def get_full_gender_given_shortName(gen:Gender):
+    if gen.value == "F":
+        return "Female"
+    elif gen.value == "M":
+        return "Male"
+    else:
+        return "Unkown gender"

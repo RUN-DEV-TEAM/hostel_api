@@ -2,6 +2,7 @@ from fastapi import APIRouter,Depends, Body, Query, HTTPException
 from typing import List
 from schemas.userSchema import CreateUser,ReturnSignUpUser,ListUser
 from schemas.blockSchemas import BlockSchema,BlockRoomSchema,GetRoomStat
+from schemas.helperSchema import Gender
 from dependencies import get_session
 from services import admin_service
 from api.endpoints.endpoint_helper import  get_current_user
@@ -35,7 +36,7 @@ async def create_new_block(block_input:BlockSchema,session: async_sessionmaker =
     return res[1]
 
 @router.put("/update_block", response_model=BlockRoomSchema)
-async def update_block(block_id:int ,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+async def update_block(block_id:int ,block_input:BlockSchema,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   pass
 
 
@@ -58,10 +59,43 @@ async def get_all_available_rooms_from_selected_block(block_id:int, session: asy
     return res[1]
 
 
+# 
+
+@router.get("/get_all_occupied_rooms_from_selected_block", response_model='')
+async def get_all_occupied_rooms_from_selected_block_service(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.get_all_occupied_rooms_from_selected_block_service(block_id,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content={"message": res[1]})  
+  elif res[0]:
+    return res[1]
+
+
 # param: matric number
-@router.get("/assign_room_to_student_in_session")
-async def assign_room_to_student_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+@router.get("/random_assign_room_to_student_in_session")
+async def random_assign_room_to_student_in_session_func(mat_no:str,gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.random_assign_room_to_student_in_session_service(mat_no,gender,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content={"message": res[1]})  
+  elif res[0]:
+    return res[1]
+  
+
+
+# param: matric number
+@router.get("/assign_room_in_specific_block_to_student_in_session")
+async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,gender:Gender,block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.assign_room_in_specific_block_to_student_in_session_service(mat_no,gender,block_id,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content={"message": res[1]})  
+  elif res[0]:
+    return res[1]
+
+
+# param: matric number
+@router.get("/assign_specific_room_in_block_to_student_in_session")
+async def assign_specific_room_in_block_to_student_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   pass
+
 
 # param: matric number
 @router.get("/get_student_room_in_session")

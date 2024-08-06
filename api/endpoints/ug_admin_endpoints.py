@@ -103,8 +103,13 @@ async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,ge
 
 # param: matric number
 @router.get("/get_student_room_in_session")
-async def get_student_room_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+async def get_student_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.get_student_room_in_session_service(mat_no, session_id,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content={"message": res[1]}) 
+  elif res[0]:
+    return res[1]
+
 
 # param: matric number
 @router.delete("/delete_student_from_room_in_session",description="Just a soft delete")

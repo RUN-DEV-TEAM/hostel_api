@@ -206,6 +206,12 @@ async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str
 
 
 
+async def get_student_room_in_session_service(mat_no:str,session_id:str, session:async_sessionmaker):
+    stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,session_id,session)
+    if not stud_room[0]:
+        return False, stud_room[1]
+    else:
+        return True,stud_room[1]
 
 #  (
 #         select(User, Profile)

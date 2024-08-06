@@ -89,7 +89,7 @@ async def room_allocation_service(matric_number:str,room_id:int,block_id:int,num
         session.add(_allo_room)
         no_stud_in_room = await get_number_of_occupant_in_room(room_id,session)
         if no_stud_in_room[0]:
-            if (room_capacity - int(no_stud_in_room[1]) ) == 1:
+            if room_capacity == no_stud_in_room[1]:
                 await update_room_status_given_room_id(room_id, session)
         await update_block_record_given_block_id_and_num_of_allocated_rooms(block_id,num_rooms_in_block,num_of_allocated_rooms,session)
         await session.commit()

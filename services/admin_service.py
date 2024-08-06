@@ -137,15 +137,17 @@ async def get_all_available_rooms_from_selected_block_service(block_id:int, sess
 
 async def get_all_occupied_rooms_from_selected_block_service(block_id:int, session:async_sessionmaker):
    try:
-       result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
-                                       RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
-                                       ).where(RoomModel.block_id == block_id,RoomModel.room_status =='OCCUPIED',RoomModel.deleted == 'N'))
-       room_list = result.all()
-       resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
+        result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
+                                        RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition,  
+                                        BlockModel.block_name)
+                                        .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                        .where(RoomModel.block_id == block_id,RoomModel.room_status =='OCCUPIED',RoomModel.deleted == 'N'))
+        room_list = result.all()
+        resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
    except:
-       return False, {"message":"Error fetching all available in block rooms given block ID"}
+        return False, {"message":"Error fetching all available in block rooms given block ID"}
    else:
-       return True,resp
+        return True,resp
 
 
 
@@ -185,6 +187,22 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 
 
+
+async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str,gender:Gender,room_id:int, session:async_sessionmaker):
+    curr_session = '2023/2024'
+    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
+    if not check_for_stud_room[0]:
+        get_room = await admin_service_helper2.get_specific_available_space_in_room(gender, curr_session,room_id,session)
+        if get_room[0]:
+            allo_room = await admin_service_helper2.room_allocation_service(mat_no,get_room[1]['id'],get_room[1]['block_id'],
+                                                                            get_room[1]['num_rooms_in_block'], get_room[1]['num_of_allocated_rooms'],
+                                                                            curr_session,get_room[1]['capacity'],session)
+            if allo_room:
+                return True,allo_room[1]
+        else:
+            return False, get_room[1] 
+    else:
+        return True, check_for_stud_room[1]
 
 
 

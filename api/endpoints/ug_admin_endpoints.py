@@ -71,7 +71,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 
 
 # param: matric number
-@router.get("/random_assign_room_to_student_in_session")
+@router.post("/random_assign_room_to_student_in_session")
 async def random_assign_room_to_student_in_session_func(mat_no:str,gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.random_assign_room_to_student_in_session_service(mat_no,gender,session)
   if not res[0]:
@@ -82,7 +82,7 @@ async def random_assign_room_to_student_in_session_func(mat_no:str,gender:Gender
 
 
 # param: matric number
-@router.get("/assign_room_in_specific_block_to_student_in_session")
+@router.post("/assign_room_in_specific_block_to_student_in_session")
 async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,gender:Gender,block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.assign_room_in_specific_block_to_student_in_session_service(mat_no,gender,block_id,session)
   if not res[0]:
@@ -92,9 +92,13 @@ async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,ge
 
 
 # param: matric number
-@router.get("/assign_specific_room_in_block_to_student_in_session")
-async def assign_specific_room_in_block_to_student_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+@router.post("/assign_specific_space_in_room_to_student_in_session")
+async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,gender:Gender,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(mat_no,gender,room_id,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content={"message": res[1]})  
+  elif res[0]:
+    return res[1]
 
 
 # param: matric number

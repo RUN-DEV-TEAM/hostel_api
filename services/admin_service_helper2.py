@@ -62,6 +62,25 @@ async def get_specific_available_room_in_block(gender:Gender,curr_session:str, b
     return True, admin_service_helper1.build_response_dict(room,RoomSchemaDetailed)
 
 
+
+async def get_specific_available_space_in_room(gender:Gender,curr_session:str, room_id:int,session:async_sessionmaker):
+    get_room = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+                                           BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
+                                        .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                        .where(RoomModel.room_status == "AVAILABLE")
+                                        .where(BlockModel.block_status == "AVAILABLE")
+                                        .where(BlockModel.gender == gender)
+                                        .where(RoomModel.id == room_id)
+                                        .with_for_update()
+                                        .order_by(func.random())
+                                        .limit(1))
+    
+    room = get_room.fetchone()
+    if not room:
+       return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(gender)} in {curr_session} academic session"}
+    return True, admin_service_helper1.build_response_dict(room,RoomSchemaDetailed)
+
+ 
     
 async def room_allocation_service(matric_number:str,room_id:int,block_id:int,num_rooms_in_block:int,
                                   num_of_allocated_rooms:int,acad_session:str,room_capacity:int,session:async_sessionmaker):

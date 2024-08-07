@@ -13,8 +13,20 @@ class RoomSchema(BaseModel):
     block_name : str
     room_status : str
     room_condition : str
-    
-    
+
+
+class RoomStatusSchema(BaseModel):
+    id : int
+    rooms_name : str
+    capacity : str 
+    room_type: str
+    block_id : int 
+    room_status : str
+    room_condition : str
+    deleted: str
+    created_at: str
+    updated_at: str
+
 
 
 class RoomSchemaDetailed(BaseModel):

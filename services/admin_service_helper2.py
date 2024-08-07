@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import func,update, and_
+from sqlalchemy import func,update, and_,delete
 from models.userModel import RoomModel,StudentModel,BlockModel
 from schemas.studentSchema import StudentRoomSchema
 from schemas.roomSchema import RoomSchemaDetailed,RoomAllocationResponseSchema
@@ -17,7 +17,7 @@ async def get_student_room_in_session(mat_no:str,curr_session:str, session:async
                                                              StudentModel.acad_session == str(curr_session).strip()))
    stud_room = result.fetchone()  
    if not stud_room:
-       return False, {"message":f"No room for matric number {mat_no}"}
+       return False, {"message":f"No room for matric number {mat_no} in the session {curr_session}"}
    stud_room_dict = admin_service_helper1.build_response_dict(stud_room,StudentRoomSchema)
    room_details = await get_room_details_given_student_room_id(stud_room_dict['room_id'],session)
    if room_details[0]:
@@ -90,8 +90,8 @@ async def room_allocation_service(matric_number:str,room_id:int,block_id:int,num
         no_stud_in_room = await get_number_of_occupant_in_room(room_id,session)
         if no_stud_in_room[0]:
             if room_capacity == no_stud_in_room[1]:
-                await update_room_status_given_room_id(room_id, session)
-        await update_block_record_given_block_id_and_num_of_allocated_rooms(block_id,num_rooms_in_block,num_of_allocated_rooms,session)
+                await incre_update_room_status_given_room_id(room_id, session)
+        await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(block_id,num_rooms_in_block,num_of_allocated_rooms,session)
         await session.commit()
         await session.refresh(_allo_room)
         room_dict = admin_service_helper1.build_response_dict(_allo_room,RoomAllocationResponseSchema)
@@ -133,12 +133,24 @@ async def get_number_of_occupant_in_room(room_id:int, session:async_sessionmaker
 
 
 
-async def update_room_status_given_room_id(room_id:int, session:async_sessionmaker):
+async def incre_update_room_status_given_room_id(room_id:int, session:async_sessionmaker):
     await session.execute(update(RoomModel).where(RoomModel.id == room_id).values(room_status="OCCUPIED")
                                  .execution_options(synchronize_session="fetch"))
 
 
-async def update_block_record_given_block_id_and_num_of_allocated_rooms(block_id:int,num_rooms_in_block:int, num_of_allocated_rooms:int,session:async_sessionmaker):
+async def decre_update_room_status_given_room_id(room_id:int,space_id:int, session:async_sessionmaker):
+    try:
+        await session.execute(update(RoomModel).where(RoomModel.id == room_id).values(room_status="AVAILABLE")
+                                 .execution_options(synchronize_session="fetch"))
+        await session.execute(delete(StudentModel).where(StudentModel.id == space_id))
+    except:
+        return False,{"message":"Error removing student from room"}
+    else:
+        return True, {"message":"Student successfully removed from room"}
+
+
+
+async def incre_update_block_record_given_block_id_and_num_of_allocated_rooms(block_id:int,num_rooms_in_block:int, num_of_allocated_rooms:int,session:async_sessionmaker):
     if (num_rooms_in_block - num_of_allocated_rooms) == 1:
         await session.execute(update(BlockModel).where(BlockModel.id == block_id)
                               .values(block_status="OCCUPIED", num_of_allocated_rooms= num_of_allocated_rooms+1)
@@ -147,6 +159,21 @@ async def update_block_record_given_block_id_and_num_of_allocated_rooms(block_id
         await session.execute(update(BlockModel).where(BlockModel.id == block_id)
                               .values(num_of_allocated_rooms= num_of_allocated_rooms+1)
                                  .execution_options(synchronize_session="fetch"))
+
+
+async def decre_update_block_record_given_block_id(block_id:int, session:async_sessionmaker):
+    try:
+        select_block = await session.execute(select(BlockModel).where(BlockModel.id == block_id).with_for_update())
+        select_block = select_block.scalar_one()
+        if select_block.num_of_allocated_rooms > 0:
+            select_block.num_of_allocated_rooms = select_block.num_of_allocated_rooms-1
+            select_block.block_status = 'AVAILABLE'
+        else:
+            return False, {"message":f"Non of the rooms in the block {select_block.block_name} was allocated to student before"}
+    except:
+        return False,{"message":"Error executing Function decre_update_room_status_given_room_id "}
+    else:
+        return True, {"message":"Function decre_update_room_status_given_room_id successfully executed"}
    
    
    

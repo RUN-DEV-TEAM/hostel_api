@@ -18,6 +18,19 @@ class BlockRoomSchema(BaseModel):
     deleted : Deleted
 
 
+class BlockRoomSchema2(BaseModel):
+    id: int
+    block_name : str
+    description : str
+    gender : Gender 
+    num_rooms_in_block: int
+    num_of_allocated_rooms : int = 0
+    num_norm_rooms_in_block : int = 0
+    num_corn_rooms_in_block : int = 0
+    block_status : BlockStatus
+    deleted : Deleted
+    created_at: str
+    updated_at: str
 
 
 

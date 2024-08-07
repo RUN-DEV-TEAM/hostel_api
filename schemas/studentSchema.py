@@ -14,3 +14,20 @@ class StudentRoomSchema(BaseModel):
     deleted: str
     created_at: str
     updated_at: str
+
+
+class StudentInBlockchema(BaseModel):
+    id: int
+    matric_number: str
+    room_id: int
+    acad_session: str
+    created_at: str
+    updated_at: str
+    rooms_name: str
+    capacity: int
+    room_type: str
+    room_status: str
+    room_condition: str
+    block_name: str
+    gender: str
+    description: str

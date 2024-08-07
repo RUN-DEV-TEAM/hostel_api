@@ -2,7 +2,7 @@ from fastapi import APIRouter,Depends, Body, Query, HTTPException
 from typing import List
 from schemas.userSchema import CreateUser,ReturnSignUpUser,ListUser
 from schemas.blockSchemas import BlockSchema,BlockRoomSchema,GetRoomStat
-from schemas.helperSchema import Gender
+from schemas.helperSchema import Gender,RoomCondition
 from dependencies import get_session
 from services import admin_service
 from api.endpoints.endpoint_helper import  get_current_user
@@ -113,43 +113,78 @@ async def get_student_room_in_session_func(mat_no:str,session_id:str, session: a
 
 # param: matric number
 @router.delete("/delete_student_from_room_in_session",description="Just a soft delete")
-async def delete_student_from_room_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
-
-# param: matric number
-@router.put("/change_student_room_in_session")
-async def change_student_room_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+async def delete_student_from_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.delete_student_from_room_in_session_service(mat_no, session_id, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
 
 @router.get("/list_students_in_room_in_session")
-async def list_student_in_room_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
-
+async def list_student_in_room_in_session_func(room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_student_in_room_in_session_service(room_id, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+    
 
 @router.get("/get_room_status_in_session")
-async def get_room_status_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+async def get_room_status_in_session_func(room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.get_room_status_in_session_service(room_id, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
 
-@router.put("/update_room_status_in_session")
-async def update_room_status_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+
+@router.put("/update_room_condition_in_session")
+async def update_room_condition_in_session_func(room_id:int, room_condition:RoomCondition, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.update_room_condition_in_session_service(room_id,room_condition, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
 
 @router.get("/list_rooms_with_empty_space_in_session")
-async def list_rooms_with_empty_space_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+async def list_rooms_with_empty_space_in_session_func(gender:Gender,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_rooms_with_empty_space_in_session_service(gender, session_id, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
 
 @router.get("/list_occupied_rooms_in_session")
-async def list_occupied_rooms_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+async def list_occupied_rooms_in_session_func(gender:Gender,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_occupied_rooms_in_session_service(gender, session_id, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
 
 
 @router.get("/list_blocks_with_empty_rooms_in_session")
-async def list_blocks_with_empty_rooms_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+async def list_blocks_with_empty_rooms_in_session_func( gender:Gender,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_blocks_with_empty_rooms_in_session_service(gender, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
+
 
 @router.get("/list_students_in_block_in_session")
 async def list_students_with_accomodation_in_block_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+  res = await admin_service.list_students_with_accomodation_in_block_in_session_service(block_id, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
+
 
 @router.get("/list_students_with_accomodation_in_session")
 async def list_students_with_accomodation_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):

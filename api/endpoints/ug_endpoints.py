@@ -20,7 +20,7 @@ async def allocate_room_to_student_in_session_func(mat_no:str, session_id:str, s
     return res[1]
 
 
-@router.post("/get_student_room__in_session",response_model="")
+@router.post("/get_student_room_in_session",response_model="")
 async def get_student_room_in_session_func(mat_no:str, session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_student_room_in_session_service(mat_no, session_id,session)
   if not res[0]:

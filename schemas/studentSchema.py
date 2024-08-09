@@ -4,6 +4,14 @@ from schemas.helperSchema import Gender,BlockStatus,Deleted
 from schemas.roomSchema import RoomSchemaDetailed
 from typing import List
 
+class StudentProfileSchema(BaseModel):
+    matric_number: str
+    surname: str
+    firstname: str
+    othername:str
+    prog_id: str
+    level: str
+
 
 
 class StudentRoomSchema(BaseModel):
@@ -31,3 +39,5 @@ class StudentInBlockchema(BaseModel):
     block_name: str
     gender: str
     description: str
+
+

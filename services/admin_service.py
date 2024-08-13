@@ -121,16 +121,18 @@ async def get_rooms_stat_service(session:async_sessionmaker):
                     'female_norm_room':sum_female_norm_rooms,'female_c_room':sum_female_corn_rooms}
 
 
-# 
+
 async def get_all_available_rooms_from_selected_block_service(block_id:int, session:async_sessionmaker):
    try:
        result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
-                                       RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
-                                       ).where(RoomModel.block_id == block_id,RoomModel.room_status =='AVAILABLE',RoomModel.room_condition =='GOOD',RoomModel.deleted == 'N'))
+                                       RoomModel.room_type, RoomModel.block_id,BlockModel.block_name,RoomModel.room_status,RoomModel.room_condition   
+                                       )
+                                       .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                       .where(RoomModel.block_id == block_id,RoomModel.room_status =='AVAILABLE',RoomModel.room_condition =='GOOD',RoomModel.deleted == 'N'))
        room_list = result.all()
        resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
    except:
-       return False, {"message":"Error fetching all available in block rooms given block ID"}
+       return False, {"message":f"Error fetching all available rooms in block given block ID {block_id}"}
    else:
        return True,resp
 

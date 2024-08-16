@@ -2,7 +2,8 @@ from sqlalchemy import Column, Integer, String, DateTime, text, ForeignKey,Enum,
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.connection import Base
-from schemas.helperSchema import RoomCondition,RoomStatus,RoomType,Deleted,Gender,BlockStatus,UserStatus,UserType
+from schemas.helperSchema import ( RoomCondition,RoomStatus,RoomType,Deleted,Gender,
+                                  BlockStatus,UserStatus,UserType, Airy, WaterAccess,PortalsLodgeProxy)
 from pydantic import ValidationError
 # from models.studentModel import StudentModel
 
@@ -32,15 +33,27 @@ class BlockModel(Base):
     num_norm_rooms_in_block = Column(Integer, default=0)
     num_corn_rooms_in_block = Column(Integer, default=0)
     block_status = Column(Enum(BlockStatus), default=BlockStatus.AVAILABLE)
+    airy = Column(Enum(Airy), default=Airy.NO)
+    water_access = Column(Enum(WaterAccess), default=WaterAccess.NO)
+    proxy_to_portals_lodge = Column(Enum(PortalsLodgeProxy), default=PortalsLodgeProxy.NO)
     deleted = Column(Enum(Deleted), default=Deleted.N)
     created_at = Column(DateTime, server_default= text('CURRENT_TIMESTAMP'))
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     rooms = relationship('RoomModel', back_populates='blocks')
+    block_proximity = relationship('BlockProximityToFacultyModel', back_populates='_blocks')
 
 
     __table_args__ = (
         UniqueConstraint('block_name', 'gender', name='_block_name_gender_uniq'),
         )
+
+
+class BlockProximityToFacultyModel(Base):
+    __tablename__ = 't_block_proximity_to_faculty'
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    faculty = Column(String(65), nullable=False)
+    block_id = Column(Integer, ForeignKey('t_blocks.id'), nullable=False)
+    _blocks = relationship('BlockModel', back_populates='block_proximity')
 
 
 class RoomModel(Base):
@@ -67,6 +80,19 @@ class StudentModel(Base):
     __tablename__ = 't_occupants'
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     matric_number = Column(String(65), nullable=False)
+    surname = Column(String(100), nullable=True)
+    firstname = Column(String(100), nullable=True)
+    othernames = Column(String(100), nullable=True)
+    sex = Column(String(1), nullable=True)
+    program = Column(String(100), nullable=True)
+    program_code = Column(String(45), nullable=True)
+    department = Column(String(191), nullable=True)
+    faculty = Column(String(65), nullable=True)
+    level = Column(String(3), nullable=True)
+    email = Column(String(100), nullable=True)
+    accom_paid = Column(String(65), nullable=True)
+    accom_payable = Column(String(65), nullable=True)
+    special_accom_paid = Column(String(65), nullable=True)
     room_id = Column(Integer, ForeignKey('t_rooms.id'), nullable=False)
     acad_session = Column(String(9), nullable=False)
     deleted = Column(Enum(Deleted), default=Deleted.N)

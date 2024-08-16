@@ -2,6 +2,22 @@ from enum import Enum
 
 
 
+
+
+
+class PortalsLodgeProxy(Enum):
+    YES = 'YES'
+    NO = 'NO'
+
+
+class Airy(Enum):
+    YES = 'YES'
+    NO = 'NO'
+
+class WaterAccess(Enum):
+    YES = 'YES'
+    NO = 'NO'
+
 class BlockStatus(Enum):
     OCCUPIED = 'OCCUPIED'
     AVAILABLE = 'AVAILABLE'

@@ -2,7 +2,7 @@ from typing import List
 from fastapi import HTTPException
 from sqlalchemy.future import select
 from sqlalchemy import func,distinct
-from models.userModel import UserModel,BlockModel,RoomModel,StudentModel
+from models.userModel import UserModel,BlockModel,RoomModel,StudentModel,BlockProximityToFacultyModel
 from schemas.userSchema import CreateUser,ListUser,ReturnSignUpUser,ListUser2
 from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2
 from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema
@@ -11,7 +11,7 @@ from schemas.helperSchema import Gender,RoomCondition
 from services import admin_service_helper1
 from services import admin_service_helper2
 from api.endpoints import endpoint_helper
-from services.external_services import verify_supplied_email_from_staff_portal
+from services.external_services import verify_supplied_email_from_staff_portal,  get_current_academic_session
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
@@ -71,6 +71,13 @@ async def get_user_4_auth_by_email_service(email:str, session:async_sessionmaker
 
 
 async def create_new_block_db_service(input:BlockSchema, session:async_sessionmaker):
+    # {'block_name': 'block 1', 'description': 'Bachelor Degree', 'gender': <Gender.M: 'M'>, 
+    #  'num_rooms_in_block': 36, 'num_corn_rooms_in_block': 1, 
+    #  'corner_rooms': [{'value': 'None', 'label': 'Not Applicable'}], 
+    #  'airy': True, 'water': False}
+    block = input.model_dump()
+    block.update({"num_norm_rooms_in_block":0})
+    print(block)
     try:
         block = input.model_dump()
         if not admin_service_helper1.validate_input_num_of_room_in_block(block)[0]:
@@ -154,13 +161,13 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 
 
 
-async def random_assign_room_to_student_in_session_service(mat_no:str,gender:Gender, session:async_sessionmaker):
-    curr_session = '2023/2024'
-    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
+async def random_assign_room_to_student_in_session_service(in_data:dict, session:async_sessionmaker):
+    curr_session = get_current_academic_session()
+    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(in_data['matric_number'],curr_session,session)
     if not check_for_stud_room[0]:
-        get_room = await admin_service_helper2.get_random_available_room(gender, curr_session,session)
+        get_room = await admin_service_helper2.get_random_available_room(in_data['sex'], curr_session,session)
         if get_room[0]:
-            allo_room = await admin_service_helper2.room_allocation_service(mat_no,get_room[1]['id'],get_room[1]['block_id'],
+            allo_room = await admin_service_helper2.room_allocation_service(in_data['matric_number'],get_room[1]['id'],get_room[1]['block_id'],
                                                                             get_room[1]['num_rooms_in_block'], get_room[1]['num_of_allocated_rooms'],
                                                                             curr_session,get_room[1]['capacity'],session)
             if allo_room:
@@ -173,7 +180,7 @@ async def random_assign_room_to_student_in_session_service(mat_no:str,gender:Gen
 
 
 async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,gender:Gender,block_id:int, session:async_sessionmaker):
-    curr_session = '2023/2024'
+    curr_session = get_current_academic_session()
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
     if not check_for_stud_room[0]:
         get_room = await admin_service_helper2.get_specific_available_room_in_block(gender, curr_session,block_id,session)
@@ -192,7 +199,7 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 
 async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str,gender:Gender,room_id:int, session:async_sessionmaker):
-    curr_session = '2023/2024'
+    curr_session = get_current_academic_session()
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
     if not check_for_stud_room[0]:
         get_room = await admin_service_helper2.get_specific_available_space_in_room(gender, curr_session,room_id,session)

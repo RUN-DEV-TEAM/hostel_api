@@ -82,10 +82,10 @@ async def get_specific_available_space_in_room(gender:Gender,curr_session:str, r
 
  
     
-async def room_allocation_service(matric_number:str,room_id:int,block_id:int,num_rooms_in_block:int,
+async def room_allocation_service(stud_profile:dict,room_id:int,block_id:int,num_rooms_in_block:int,
                                   num_of_allocated_rooms:int,acad_session:str,room_capacity:int,session:async_sessionmaker):
     try:
-        _allo_room = StudentModel(matric_number=matric_number,room_id=room_id,acad_session=acad_session)
+        _allo_room = StudentModel(room_id=room_id,acad_session=acad_session,**stud_profile)
         session.add(_allo_room)
         no_stud_in_room = await get_number_of_occupant_in_room(room_id,session)
         if no_stud_in_room[0]:

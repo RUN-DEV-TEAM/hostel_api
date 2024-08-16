@@ -34,6 +34,21 @@ class BlockRoomSchema2(BaseModel):
 
 
 
+class BlockSchemaCreate(BaseModel):
+    block_name : str
+    description : str
+    gender : Gender 
+    num_rooms_in_block: int
+    num_corn_rooms_in_block : int = 0
+    corner_rooms: List[dict] |str = {}
+    airy: bool
+    water: bool
+
+   
+
+ 
+
+
 class BlockSchema(BaseModel):
     block_name : str
     description : str

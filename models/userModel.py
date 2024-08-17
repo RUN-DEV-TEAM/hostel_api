@@ -21,7 +21,7 @@ class UserModel(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
-# 
+
 class BlockModel(Base):
     __tablename__ = 't_blocks'
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -59,7 +59,7 @@ class BlockProximityToFacultyModel(Base):
 class RoomModel(Base):
     __tablename__ = 't_rooms'
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    rooms_name = Column(String(45), nullable=False)
+    room_name = Column(String(45), nullable=False)
     capacity = Column(Integer, nullable=False)
     room_type = Column(Enum(RoomType), default=RoomType.NORMAL)
     block_id = Column(Integer, ForeignKey('t_blocks.id'), nullable=False)
@@ -72,7 +72,7 @@ class RoomModel(Base):
     occupants = relationship('StudentModel', back_populates='rooms')
 
     __table_args__ = (
-        UniqueConstraint('rooms_name', 'block_id', name='_rooms_name_block_id_uniq'),
+        UniqueConstraint('room_name', 'block_id', name='_room_name_block_id_uniq'),
         )
 
 

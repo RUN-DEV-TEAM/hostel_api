@@ -30,13 +30,13 @@ async def get_student_profile_and_allocate_room_to_the_student(mat_no:str, sessi
             if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_paid'])) and int(stud_obj['special_accom_paid']) > 0:
                 get_room_condition['room_cat'] = 'SPECIAL'
                 # fake response
-                return True, {"room_cat":"SPECIAL","id":"23", "rooms_name":"room 13", "capacity":2,"room_type":"normal room","block_id":12,"block_name":"Guess House","block desc":"Guess House ", "room_condition":"GOOD" }              
+                return True, {"room_cat":"SPECIAL","id":"23", "room_name":"room 13", "capacity":2,"room_type":"normal room","block_id":12,"block_name":"Guess House","block desc":"Guess House ", "room_condition":"GOOD" }              
                 res = await admin_service.random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
                 return res
             elif int(stud_obj['special_accom_paid']) == -1 and (int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) ):
                 get_room_condition['room_cat'] = 'GENERAL'
                 # fake response
-                return True, {"room_cat":"GENERAL","id":"23", "rooms_name":"room 13", "capacity":6,"room_type":"cornal room","block_id":12,"block_name":"block 2","block desc":"Joseph", "room_condition":"GOOD" }             
+                return True, {"room_cat":"GENERAL","id":"23", "room_name":"room 13", "capacity":6,"room_type":"cornal room","block_id":12,"block_name":"block 2","block desc":"Joseph", "room_condition":"GOOD" }             
                 res = await admin_service.random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
                 return res
             else:

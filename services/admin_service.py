@@ -4,8 +4,8 @@ from sqlalchemy.future import select
 from sqlalchemy import func,distinct
 from models.userModel import UserModel,BlockModel,RoomModel,StudentModel,BlockProximityToFacultyModel
 from schemas.userSchema import CreateUser,ListUser,ReturnSignUpUser,ListUser2
-from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2,BlockSchemaCreate
-from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema
+from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2,BlockSchemaCreate,BlockRoomSchema,BlockProxityResponse
+from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema,RoomSchemaWithOutBlockName
 from schemas.studentSchema import StudentRoomSchema,StudentInBlockchema
 from schemas.helperSchema import Gender,RoomCondition
 from services import admin_service_helper1
@@ -71,45 +71,53 @@ async def get_user_4_auth_by_email_service(email:str, session:async_sessionmaker
 
 
 async def create_new_block_db_service(input:BlockSchemaCreate, session:async_sessionmaker):
-   
-    block = input.model_dump()
-    num_norm_rooms_in_block = int(block['num_rooms_in_block']) - int(block['num_corn_rooms_in_block']) 
-    block.update({"num_norm_rooms_in_block":num_norm_rooms_in_block})
-    if isinstance(block['corner_rooms'], str):
-        block.update({"num_norm_rooms_in_block":block['num_rooms_in_block'],"num_corn_rooms_in_block":0})
     try:
+        block = input.model_dump()
+        if isinstance(block['corner_rooms'], str):
+            block.update({"num_norm_rooms_in_block":block['num_rooms_in_block'],"num_corn_rooms_in_block":0})
+        num_norm_rooms_in_block = int(block['num_rooms_in_block']) - int(block['num_corn_rooms_in_block']) 
+        block.update({"num_norm_rooms_in_block":num_norm_rooms_in_block})
         if not admin_service_helper1.validate_input_num_of_room_in_block(block)[0]:
             return False,{"message":admin_service_helper1.validate_input_num_of_room_in_block(block)[1]} 
-        print(block)
-        return False, {"message":block}
-        block = BlockModel(**block)
-        session.add(block)
+        block_model_inst = BlockModel(block_name=block['block_name'] , description= block['description'], 
+                                        gender=block['gender'] ,num_rooms_in_block= block['num_rooms_in_block'],
+                            num_norm_rooms_in_block= block['num_norm_rooms_in_block'],num_corn_rooms_in_block= block['num_corn_rooms_in_block'],
+                            airy= admin_service_helper1.convert_true_false_to_yes_no(block['airy']),
+                            water_access=admin_service_helper1.convert_true_false_to_yes_no(block['water']),proxy_to_portals_lodge=admin_service_helper1.convert_true_false_to_yes_no(block['access_to_lodge']))
+        session.add(block_model_inst)
         await session.commit()
-        await session.refresh(block)
-        list_room_num = [num for num in range(1, block.num_rooms_in_block+1)]
-        list_of_norm_room_num = [norm for norm in list_room_num if norm not in [12,18,32]]
-        norm_room_objs = [RoomModel(rooms_name= f"room_{i}",capacity="3", room_type="NORMAL",block_id = block.id) 
+        await session.refresh(block_model_inst)
+        if admin_service_helper1.strip_list_of_dict(block['block_access_to_fac'])[0]:
+            block_fac_access_stripped = admin_service_helper1.strip_list_of_dict(block['block_access_to_fac'])[1]
+            block_proxi = [BlockProximityToFacultyModel(faculty=el, block_id=block_model_inst.id) for el in block_fac_access_stripped]
+            session.add_all(block_proxi)
+            await session.commit()
+        list_room_num = [num for num in range(1, int(block['num_rooms_in_block'])+1)]
+        if admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[0]:
+            corn_room_stripped = admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[1]
+            list_of_norm_room_num = [norm for norm in list_room_num if norm not in corn_room_stripped]
+        norm_room_objs = [RoomModel(room_name= f"room_{i}",capacity=block['norm_room_capacity'], room_type="NORMAL",block_id = block_model_inst.id) 
                                 for i in list_of_norm_room_num]
         session.add_all(norm_room_objs)
         await session.commit()
-        corn_room_objs = [RoomModel(rooms_name= f"room_{i}",capacity="4", room_type="CORNER",block_id = block.id) 
-                                for i in [12,18,32]]
-        session.add_all(corn_room_objs)
-        await session.commit()
+        if len(corn_room_stripped)>0 and block['num_corn_rooms_in_block'] >0 and (int(num_norm_rooms_in_block) < int(block['num_rooms_in_block'])):
+            corn_room_objs = [RoomModel(room_name= f"room_{i}",capacity=block['corn_room_capacity'], room_type="CORNER",block_id = block_model_inst.id) 
+                                    for i in corn_room_stripped]
+            session.add_all(corn_room_objs)
+            await session.commit()
     except:
          await session.rollback()
          return False,{"message":"Error creating block and rooms"} 
     else:
-         block_dict = admin_service_helper1.build_response_dict(block,BlockSchema) 
-         list_norm_rooms_created = [admin_service_helper1.build_response_dict(norm_obj,RoomSchema)  for norm_obj in norm_room_objs ]
-         list_corn_rooms_created = [admin_service_helper1.build_response_dict(corn_obj,RoomSchema)  for corn_obj in corn_room_objs ]
-         block_dict.update({"norm_room":list_norm_rooms_created, "corner_room":list_corn_rooms_created})
-         return True,block_dict
+        block_dict = admin_service_helper1.build_response_dict(block_model_inst,BlockSchema) 
+        list_norm_rooms_created = [admin_service_helper1.build_response_dict(norm_obj,RoomSchemaWithOutBlockName)  for norm_obj in norm_room_objs ]
+        list_corn_rooms_created = [admin_service_helper1.build_response_dict(corn_obj,RoomSchemaWithOutBlockName)  for corn_obj in corn_room_objs ]
+        list_block_fac_access_stripped = [admin_service_helper1.build_response_dict(obj,BlockProxityResponse)  for obj in block_proxi]
+        block_dict.update({"norm_room":list_norm_rooms_created, "corner_room":list_corn_rooms_created, "block_access_to_fac":list_block_fac_access_stripped})
+        return True,block_dict
     finally:
         pass
     
-
-
 
 
 async def get_rooms_stat_service(session:async_sessionmaker):

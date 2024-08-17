@@ -26,14 +26,9 @@ def format_datetime(dt: datetime) -> str:
     return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 
-# {'block_name': 'block 1', 'description': 'Rafiu Personal Statement', 'gender': <Gender.M: 'M'>, 
-#  'num_rooms_in_block': 36, 'num_corn_rooms_in_block': 2, 
-#  'corner_rooms': [{'value': 5, 'label': 'Room 5'}, {'value': 2, 'label': 'Room 2'}], 
-#   'airy': True, 'water': True, 'num_norm_rooms_in_block': 0}
+
 
 def validate_input_num_of_room_in_block(input:dict):
-   print("#############################################@@@@@@@@@@@@@@@@@")
-   print(input)
    msg = "Error from except... validating validate_input_num_of_room_in_block"
    try:
        num_rooms_in_block = int(input["num_rooms_in_block"])
@@ -60,3 +55,25 @@ def get_full_gender_given_shortName(gen):
         return "Male"
     else:
         return "Unkown gender"
+
+
+def strip_list_of_dict(list_data:dict):
+    list_resp = []
+    if isinstance(list_data, list):
+        for item in list_data:
+            list_resp.append(int(item['value']))
+        return True,list_resp
+    else:
+        return False, {"message":"Wrong data type supplied ... not a list"}
+
+
+def convert_true_false_to_yes_no(para:bool):
+    if isinstance(para, bool):
+        if para:
+            return 'YES'
+        elif not para:
+            return 'NO'
+        else:
+            return 'NO'
+    else:
+        return False, {"message":"Wrong data type supplied ... not a boolean"}

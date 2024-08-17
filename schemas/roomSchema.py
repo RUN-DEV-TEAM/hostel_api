@@ -4,9 +4,20 @@ from schemas.helperSchema import Gender,BlockStatus,Deleted
 from typing import List
 
 
+
+
+class RoomSchemaWithOutBlockName(BaseModel):
+    id : int
+    room_name : str
+    capacity : str 
+    room_type: str
+    block_id : int 
+    room_status : str
+    room_condition : str
+
 class RoomSchema(BaseModel):
     id : int
-    rooms_name : str
+    room_name : str
     capacity : str 
     room_type: str
     block_id : int 
@@ -17,7 +28,7 @@ class RoomSchema(BaseModel):
 
 class RoomStatusSchema(BaseModel):
     id : int
-    rooms_name : str
+    room_name : str
     capacity : str 
     room_type: str
     block_id : int 
@@ -31,7 +42,7 @@ class RoomStatusSchema(BaseModel):
 
 class RoomSchemaDetailed(BaseModel):
     id : int
-    rooms_name : str
+    room_name : str
     capacity : str 
     room_type: str
     block_id : int 

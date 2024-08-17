@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends, Body, Query, HTTPException
 from typing import List
 from schemas.userSchema import CreateUser,ReturnSignUpUser,ListUser
-from schemas.blockSchemas import BlockSchema,BlockRoomSchema,GetRoomStat,BlockSchemaCreate
+from schemas.blockSchemas import BlockSchema,BlockRoomSchema,GetRoomStat,BlockSchemaCreate,BlockSchemaCreateResponse
 from schemas.helperSchema import Gender,RoomCondition
 from dependencies import get_session
 from services import admin_service
@@ -26,8 +26,8 @@ async def get_user(email:str, session: async_sessionmaker = Depends(get_session)
     return JSONResponse(status_code=404, content={"message": "User not found"})     
   return res
 
-
-@router.post("/create_block", response_model=BlockSchemaCreate)
+# 
+@router.post("/create_block", response_model=BlockSchemaCreateResponse)
 async def create_new_block(block_input:BlockSchemaCreate,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.create_new_block_db_service(block_input,session)
   if not res[0]:

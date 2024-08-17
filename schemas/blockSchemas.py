@@ -4,6 +4,10 @@ from schemas.helperSchema import Gender,BlockStatus,Deleted
 from typing import List
 
 
+class BlockProxityResponse(BaseModel):
+    faculty : int
+
+
 class BlockRoomSchema(BaseModel):
     block_name : str
     description : str
@@ -40,6 +44,8 @@ class BlockSchemaCreate(BaseModel):
     gender : str 
     num_rooms_in_block: int
     num_corn_rooms_in_block : int = 0
+    norm_room_capacity: int
+    corn_room_capacity: int
     corner_rooms: List[dict] |str = []
     block_access_to_fac: List[dict]  = []
     access_to_lodge: bool = False
@@ -47,7 +53,25 @@ class BlockSchemaCreate(BaseModel):
     water: bool = False
 
 
- 
+
+class BlockSchemaCreateResponse(BaseModel):
+    block_name : str
+    description : str
+    gender : str 
+    num_rooms_in_block: int
+    num_of_allocated_rooms : int = 0
+    num_norm_rooms_in_block : int = 0
+    num_corn_rooms_in_block : int = 0
+    block_status: str
+    deleted: str
+    norm_room: List[dict] = []
+    corner_room: List[dict] = []
+    block_access_to_fac: List[dict]  = []
+    access_to_lodge: bool = False
+    airy: bool = False
+    water: bool = False
+
+
 class BlockSchema(BaseModel):
     block_name : str
     description : str

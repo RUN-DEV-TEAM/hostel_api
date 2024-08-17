@@ -10,14 +10,14 @@ from services import admin_service_helper1
 
 
 
-async def get_student_room_in_session(mat_no:str,curr_session:str, session:async_sessionmaker):
+async def get_student_room_in_session(in_data:dict, session:async_sessionmaker):
    result = await session.execute(select(StudentModel.id,StudentModel.matric_number,StudentModel.room_id,StudentModel.acad_session,
                                          StudentModel.deleted,StudentModel.created_at,StudentModel.updated_at
-                                         ).where(StudentModel.matric_number == str(mat_no).strip(),
-                                                             StudentModel.acad_session == str(curr_session).strip()))
+                                         ).where(StudentModel.matric_number == str(in_data['matric_number']).strip(),
+                                                             StudentModel.acad_session == str(in_data['curr_session']).strip()))
    stud_room = result.fetchone()  
    if not stud_room:
-       return False, {"message":f"No room for matric number {mat_no} in the session {curr_session}"}
+       return False, {"message":f"No room for matric number {in_data['matric_number']} in the session {in_data['curr_session']} yet"}
    stud_room_dict = admin_service_helper1.build_response_dict(stud_room,StudentRoomSchema)
    room_details = await get_room_details_given_student_room_id(stud_room_dict['room_id'],session)
    if room_details[0]:
@@ -26,20 +26,21 @@ async def get_student_room_in_session(mat_no:str,curr_session:str, session:async
 
 
 
-async def get_random_available_room(gender:Gender,curr_session:str, session:async_sessionmaker):
+
+async def get_random_available_room(stud_obj:dict,get_room_condition:dict, session:async_sessionmaker):
     get_room = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                         .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                         .where(RoomModel.room_status == "AVAILABLE")
                                         .where(BlockModel.block_status == "AVAILABLE")
-                                        .where(BlockModel.gender == gender)
+                                        .where(BlockModel.gender == stud_obj['sex'])
                                         .with_for_update()
                                         .order_by(func.random())
                                         .limit(1))
     
     room = get_room.fetchone()
     if not room:
-       return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(gender)} in {curr_session} academic session"}
+       return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(stud_obj['sex'])} in {stud_obj['curr_session']} academic session"}
     return True, admin_service_helper1.build_response_dict(room,RoomSchemaDetailed)
 
 
@@ -82,20 +83,19 @@ async def get_specific_available_space_in_room(gender:Gender,curr_session:str, r
 
  
     
-async def room_allocation_service(stud_profile:dict,room_id:int,block_id:int,num_rooms_in_block:int,
-                                  num_of_allocated_rooms:int,acad_session:str,room_capacity:int,session:async_sessionmaker):
+async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sessionmaker):
     try:
-        _allo_room = StudentModel(room_id=room_id,acad_session=acad_session,**stud_profile)
+        _allo_room = StudentModel(room_id=room_obj['id'],acad_session=stud_obj['curr_session'],**stud_obj)
         session.add(_allo_room)
-        no_stud_in_room = await get_number_of_occupant_in_room(room_id,session)
+        no_stud_in_room = await get_number_of_occupant_in_room(room_obj['id'],session)
         if no_stud_in_room[0]:
-            if room_capacity == no_stud_in_room[1]:
-                await incre_update_room_status_given_room_id(room_id, session)
-        await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(block_id,num_rooms_in_block,num_of_allocated_rooms,session)
+            if room_obj['capacity'] == no_stud_in_room[1]:
+                await incre_update_room_status_given_room_id(room_obj['id'], session)
+        await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(room_obj['block_id'],room_obj['num_rooms_in_block'],room_obj['num_of_allocated_rooms'],session)
         await session.commit()
         await session.refresh(_allo_room)
         room_dict = admin_service_helper1.build_response_dict(_allo_room,RoomAllocationResponseSchema)
-        room_details = await get_room_details_given_student_room_id(room_id,session)
+        room_details = await get_room_details_given_student_room_id(room_obj['id'],session)
         if room_details[0]:
             room_dict.update({"room_details":room_details[1]})
         return True,room_dict

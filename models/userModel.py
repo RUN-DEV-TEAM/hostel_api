@@ -88,13 +88,15 @@ class StudentModel(Base):
     program_code = Column(String(45), nullable=True)
     department = Column(String(191), nullable=True)
     faculty = Column(String(65), nullable=True)
+    faculty_id = Column(Integer, nullable=True)
     level = Column(String(3), nullable=True)
     email = Column(String(100), nullable=True)
     accom_paid = Column(String(65), nullable=True)
     accom_payable = Column(String(65), nullable=True)
     special_accom_paid = Column(String(65), nullable=True)
+    special_accom_payable = Column(String(65), nullable=True)
     room_id = Column(Integer, ForeignKey('t_rooms.id'), nullable=False)
-    acad_session = Column(String(9), nullable=False)
+    curr_session = Column(String(9), nullable=False)
     deleted = Column(Enum(Deleted), default=Deleted.N)
     created_at = Column(DateTime, server_default= text('CURRENT_TIMESTAMP'))
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
@@ -102,7 +104,7 @@ class StudentModel(Base):
 
 
     __table_args__ = (
-        UniqueConstraint('matric_number', 'acad_session', name='_matric_number_acad_session_uniq'),
+        UniqueConstraint('matric_number', 'curr_session', name='_matric_number_acad_session_uniq'),
         UniqueConstraint('matric_number', 'room_id', name='_matric_number_room_id_uniq'),
         )
 

@@ -4,7 +4,7 @@ from sqlalchemy.future import select
 from sqlalchemy import func,distinct
 from models.userModel import UserModel,BlockModel,RoomModel,StudentModel,BlockProximityToFacultyModel
 from schemas.userSchema import CreateUser,ListUser,ReturnSignUpUser,ListUser2
-from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2
+from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2,BlockSchemaCreate
 from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema
 from schemas.studentSchema import StudentRoomSchema,StudentInBlockchema
 from schemas.helperSchema import Gender,RoomCondition
@@ -70,18 +70,18 @@ async def get_user_4_auth_by_email_service(email:str, session:async_sessionmaker
   
 
 
-async def create_new_block_db_service(input:BlockSchema, session:async_sessionmaker):
-    # {'block_name': 'block 1', 'description': 'Bachelor Degree', 'gender': <Gender.M: 'M'>, 
-    #  'num_rooms_in_block': 36, 'num_corn_rooms_in_block': 1, 
-    #  'corner_rooms': [{'value': 'None', 'label': 'Not Applicable'}], 
-    #  'airy': True, 'water': False}
+async def create_new_block_db_service(input:BlockSchemaCreate, session:async_sessionmaker):
+   
     block = input.model_dump()
-    block.update({"num_norm_rooms_in_block":0})
-    print(block)
+    num_norm_rooms_in_block = int(block['num_rooms_in_block']) - int(block['num_corn_rooms_in_block']) 
+    block.update({"num_norm_rooms_in_block":num_norm_rooms_in_block})
+    if isinstance(block['corner_rooms'], str):
+        block.update({"num_norm_rooms_in_block":block['num_rooms_in_block'],"num_corn_rooms_in_block":0})
     try:
-        block = input.model_dump()
         if not admin_service_helper1.validate_input_num_of_room_in_block(block)[0]:
             return False,{"message":admin_service_helper1.validate_input_num_of_room_in_block(block)[1]} 
+        print(block)
+        return False, {"message":block}
         block = BlockModel(**block)
         session.add(block)
         await session.commit()
@@ -161,15 +161,13 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 
 
 
-async def random_assign_room_to_student_in_session_service(in_data:dict, session:async_sessionmaker):
-    curr_session = get_current_academic_session()
-    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(in_data['matric_number'],curr_session,session)
+async def random_assign_room_to_student_in_session_service(in_data:dict,get_room_condition:dict, session:async_sessionmaker):
+   
+    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(in_data,session)
     if not check_for_stud_room[0]:
-        get_room = await admin_service_helper2.get_random_available_room(in_data['sex'], curr_session,session)
+        get_room = await admin_service_helper2.get_random_available_room(in_data,get_room_condition,session)
         if get_room[0]:
-            allo_room = await admin_service_helper2.room_allocation_service(in_data['matric_number'],get_room[1]['id'],get_room[1]['block_id'],
-                                                                            get_room[1]['num_rooms_in_block'], get_room[1]['num_of_allocated_rooms'],
-                                                                            curr_session,get_room[1]['capacity'],session)
+            allo_room = await admin_service_helper2.room_allocation_service(in_data,get_room[1],session)
             if allo_room:
                 return True,allo_room[1]
         else:

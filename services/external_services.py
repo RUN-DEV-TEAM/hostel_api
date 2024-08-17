@@ -39,7 +39,7 @@ def get_student_profile_in_session_given_matno(matno):
             res_data = response.json()
             return True, res_data
         else:
-            return False, {"message": f"No student profile found with matric number {matno}"}
+            return False, {"message": f"No student profile found for matric number {matno}"}
     except:
         return False, {"message" : "Error fetching student profile"}
     

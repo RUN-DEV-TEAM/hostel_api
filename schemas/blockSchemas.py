@@ -37,18 +37,17 @@ class BlockRoomSchema2(BaseModel):
 class BlockSchemaCreate(BaseModel):
     block_name : str
     description : str
-    gender : Gender 
+    gender : str 
     num_rooms_in_block: int
     num_corn_rooms_in_block : int = 0
-    corner_rooms: List[dict] |str = {}
-    airy: bool
-    water: bool
+    corner_rooms: List[dict] |str = []
+    block_access_to_fac: List[dict]  = []
+    access_to_lodge: bool = False
+    airy: bool = False
+    water: bool = False
 
-   
 
  
-
-
 class BlockSchema(BaseModel):
     block_name : str
     description : str

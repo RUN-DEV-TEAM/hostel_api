@@ -31,7 +31,7 @@ def format_datetime(dt: datetime) -> str:
 #  'corner_rooms': [{'value': 5, 'label': 'Room 5'}, {'value': 2, 'label': 'Room 2'}], 
 #   'airy': True, 'water': True, 'num_norm_rooms_in_block': 0}
 
-def validate_input_num_of_room_in_block(input):
+def validate_input_num_of_room_in_block(input:dict):
    print("#############################################@@@@@@@@@@@@@@@@@")
    print(input)
    msg = "Error from except... validating validate_input_num_of_room_in_block"

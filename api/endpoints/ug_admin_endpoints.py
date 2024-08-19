@@ -41,6 +41,12 @@ async def update_block(block_id:int ,block_input:BlockSchema,session: async_sess
   pass
 
 
+@router.get("/get_all_available_blocks_per_gender", response_model='')
+async def get_all_available_blocks_per_gender(gender:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  return JSONResponse(status_code=404, content={"message": "Under development..."}) 
+
+
+
 @router.get("/get_rooms_stat", response_model=GetRoomStat)
 async def get_rooms_stat(session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_rooms_stat_service(session)
@@ -49,6 +55,7 @@ async def get_rooms_stat(session: async_sessionmaker = Depends(get_session), use
   elif res[0]:
     return res[1]
   
+
 
 
 @router.get("/get_all_available_rooms_from_selected_block", response_model='')
@@ -73,8 +80,8 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 
 # param: matric number
 @router.post("/random_assign_room_to_student_in_session")
-async def random_assign_room_to_student_in_session_func(mat_no:str,gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  res = await admin_service.random_assign_room_to_student_in_session_service(mat_no,gender,session)
+async def random_assign_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no,session)
   if not res[0]:
     return JSONResponse(status_code=404, content={"message": res[1]})  
   elif res[0]:

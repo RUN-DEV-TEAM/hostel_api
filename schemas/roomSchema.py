@@ -64,4 +64,4 @@ class RoomSchemaDetailed(BaseModel):
 class RoomAllocationResponseSchema(BaseModel):
     matric_number:str
     room_id:int
-    acad_session:str
+    curr_session:str

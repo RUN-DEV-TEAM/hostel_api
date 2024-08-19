@@ -18,7 +18,7 @@ class StudentRoomSchema(BaseModel):
     id: int
     matric_number: str
     room_id: int
-    acad_session: str
+    curr_session: str
     deleted: str
     created_at: str
     updated_at: str
@@ -28,7 +28,7 @@ class StudentInBlockchema(BaseModel):
     id: int
     matric_number: str
     room_id: int
-    acad_session: str
+    curr_session: str
     created_at: str
     updated_at: str
     rooms_name: str

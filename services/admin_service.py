@@ -11,14 +11,14 @@ from schemas.helperSchema import Gender,RoomCondition
 from services import admin_service_helper1
 from services import admin_service_helper2
 from api.endpoints import endpoint_helper
-from services.external_services import verify_supplied_email_from_staff_portal,  get_current_academic_session
+from services import external_services
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
 
 
 async def sign_up_service(user_create:CreateUser, session:async_sessionmaker) -> ListUser:
    user_create = user_create.model_dump()
-   status,data = verify_supplied_email_from_staff_portal(user_create["email"],user_create["password"])
+   status,data = external_services.verify_supplied_email_from_staff_portal(user_create["email"],user_create["password"])
    if status:
        try:
             user_create["password"] = endpoint_helper.get_password_hashed(user_create["password"])
@@ -139,7 +139,7 @@ async def get_rooms_stat_service(session:async_sessionmaker):
 
 async def get_all_available_rooms_from_selected_block_service(block_id:int, session:async_sessionmaker):
    try:
-       result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
+       result = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,
                                        RoomModel.room_type, RoomModel.block_id,BlockModel.block_name,RoomModel.room_status,RoomModel.room_condition   
                                        )
                                        .join(BlockModel, RoomModel.block_id == BlockModel.id)
@@ -155,7 +155,7 @@ async def get_all_available_rooms_from_selected_block_service(block_id:int, sess
 
 async def get_all_occupied_rooms_from_selected_block_service(block_id:int, session:async_sessionmaker):
    try:
-        result = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,
+        result = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,
                                         RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition,  
                                         BlockModel.block_name)
                                         .join(BlockModel, RoomModel.block_id == BlockModel.id)
@@ -168,9 +168,23 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
         return True,resp
 
 
+async def get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no, session):
+    stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
+    curr_session = external_services.get_current_academic_session()
+    if stud_profile[0] and curr_session[0]:
+        stud_obj = stud_profile[1]
+        stud_obj['matric_number'] = mat_no
+        stud_obj['curr_session'] = curr_session[1]
+        res = await first_condition_before_ramdom_room_allocation(stud_obj,session)
+        if res[0]:
+            return True,res[1]
+        else:
+            return False,res[0]
+    else:
+        return False,stud_profile[1]
+    
 
 async def random_assign_room_to_student_in_session_service(in_data:dict,get_room_condition:dict, session:async_sessionmaker):
-   
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(in_data,session)
     if not check_for_stud_room[0]:
         get_room = await admin_service_helper2.get_random_available_room(in_data,get_room_condition,session)
@@ -186,7 +200,7 @@ async def random_assign_room_to_student_in_session_service(in_data:dict,get_room
 
 
 async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,gender:Gender,block_id:int, session:async_sessionmaker):
-    curr_session = get_current_academic_session()
+    curr_session = external_services.get_current_academic_session()[1]
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
     if not check_for_stud_room[0]:
         get_room = await admin_service_helper2.get_specific_available_room_in_block(gender, curr_session,block_id,session)
@@ -203,9 +217,41 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 
 
+async def first_condition_before_ramdom_room_allocation(stud_obj,session):
+    if not stud_obj['accom_payable'] or not stud_obj['special_accom_payable']:
+        return False,{"message":"Issue with datatype field ...accom_payable or special_accom_payable"}    
+    if int(stud_obj['accom_paid']) < int(stud_obj['accom_payable']) :
+            return False, {"message": f"#{stud_obj['accom_payable']}  is the amount payable for accommodation but you have just paid #{int(stud_obj['accom_paid'])}"}
+    elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :
+        get_room_condition = {'room_cat':''}
+        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
+            get_room_condition['room_cat'] = 'SPECIAL'
+            print(stud_obj)
+            # fake response
+            # return True, {"room_cat":"SPECIAL","id":"23", "room_name":"room 13", "capacity":2,"room_type":"normal room","block_id":12,"block_name":"Guess House","block desc":"Guess House ", "room_condition":"GOOD" }              
+            res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
+            if res[0]:
+                return True, res[1]
+            else:
+                return False, res[1]
+        elif int(stud_obj['special_accom_paid']) == -1 and (int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) ):
+            get_room_condition['room_cat'] = 'GENERAL'
+            # fake response
+            # return True, {"room_cat":"GENERAL","id":"23", "room_name":"room 13", "capacity":6,"room_type":"cornal room","block_id":12,"block_name":"block 2","block desc":"Joseph", "room_condition":"GOOD" }             
+            res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
+            if res[0]:
+                return True, res[1]
+            else:
+                return False, res[1]
+        else:
+            return False,{"message":"Ops!! I doubt if you have actually paid minimum requirement for accommodation in this session"}
+    else:
+        return False,{"message":"Sorry!! Your acclaimed payment for accommodation can not be verified now"}    
+
+
 
 async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str,gender:Gender,room_id:int, session:async_sessionmaker):
-    curr_session = get_current_academic_session()
+    curr_session = external_services.get_current_academic_session()
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
     if not check_for_stud_room[0]:
         get_room = await admin_service_helper2.get_specific_available_space_in_room(gender, curr_session,room_id,session)
@@ -259,7 +305,7 @@ async def list_student_in_room_in_session_service(room_id:int, session:async_ses
 
 async def get_room_status_in_session_service(room_id:int, session:async_sessionmaker):
     try:
-        query = await session.execute(select(RoomModel.id,RoomModel.rooms_name,RoomModel.capacity,RoomModel.room_type,
+        query = await session.execute(select(RoomModel.id,RoomModel.room_name,RoomModel.capacity,RoomModel.room_type,
                                             RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition,
                                             RoomModel.deleted,RoomModel.created_at,RoomModel.updated_at
                                             ).where(RoomModel.id == room_id))
@@ -292,7 +338,7 @@ async def list_rooms_with_empty_space_in_session_service(gender:Gender, session_
     try:
         # query = await session.execute(select(distinct(StudentModel.room_id)).where(StudentModel.acad_session==session_id))
         # list_occupied_room_in_session_id = query.scalars().all()
-        get_room = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+        get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")
@@ -310,7 +356,7 @@ async def list_rooms_with_empty_space_in_session_service(gender:Gender, session_
 
 async def list_occupied_rooms_in_session_service(gender:Gender, session_id, session:async_sessionmaker):
     try:
-        get_room = await session.execute(select(RoomModel.id, RoomModel.rooms_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+        get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "OCCUPIED")
@@ -346,7 +392,7 @@ async def list_students_with_accomodation_in_block_in_session_service(block_id:i
     try:
         query = await session.execute(select(StudentModel.id, StudentModel.matric_number,StudentModel.acad_session,
                                             StudentModel.room_id,StudentModel.created_at, StudentModel.updated_at,
-                                            RoomModel.rooms_name, RoomModel.capacity,RoomModel.room_type,RoomModel.room_status,RoomModel.room_condition,
+                                            RoomModel.room_name, RoomModel.capacity,RoomModel.room_type,RoomModel.room_status,RoomModel.room_condition,
                                             BlockModel.block_name,BlockModel.gender,BlockModel.description)
                                             .join(RoomModel, StudentModel.room_id == RoomModel.id)
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id )

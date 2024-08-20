@@ -47,11 +47,21 @@ class RoomSchemaDetailed(BaseModel):
     room_type: str
     block_id : int 
     block_name : str
-    num_rooms_in_block:int
-    num_of_allocated_rooms:int
-    gender: str
+    num_rooms_in_block: int
+    num_of_allocated_rooms: int
     room_status : str
     room_condition : str
+
+
+# class RoomSchemaDetailedResponse(BaseModel):
+#     id : int
+#     room_name : str
+#     capacity : str 
+#     room_type: str
+#     block_id : int 
+#     block_name : str
+#     room_status : str
+#     room_condition : str
 
 
 
@@ -63,5 +73,20 @@ class RoomSchemaDetailed(BaseModel):
 
 class RoomAllocationResponseSchema(BaseModel):
     matric_number:str
-    room_id:int
+    surname:str
+    firstname:str
+    sex:str
+    program: str
+    level: str
     curr_session:str
+    created_at: str
+    
+
+class RoomSchemaDetailedResponse(BaseModel):
+    id : int
+    room_name : str
+    capacity : str 
+    room_type: str
+    block_id : int 
+    block_name : str
+    description: str

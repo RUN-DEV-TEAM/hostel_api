@@ -1,7 +1,6 @@
 from datetime import datetime
 from schemas.helperSchema import Gender
 
-
 def check_for_norm_3_or_corn_4_room(room):
     pass
 
@@ -12,7 +11,8 @@ def build_response_dict(db_response, schema):
             if  field_name == 'created_at' or field_name == 'updated_at':
                 response_dict[field_name] = format_datetime(getattr(db_response, field_name))
             else:
-                response_dict[field_name] = getattr(db_response, field_name)
+                if hasattr(db_response, field_name):
+                    response_dict[field_name] = getattr(db_response, field_name)
     except KeyError:
         return False
     else:

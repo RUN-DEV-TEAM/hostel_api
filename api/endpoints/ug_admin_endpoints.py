@@ -41,10 +41,13 @@ async def update_block(block_id:int ,block_input:BlockSchema,session: async_sess
   pass
 
 
-@router.get("/get_all_available_blocks_per_gender", response_model='')
-async def get_all_available_blocks_per_gender(gender:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  return JSONResponse(status_code=404, content={"message": "Under development..."}) 
-
+@router.get("/list_all_available_blocks_given_gender", response_model='')
+async def list_all_available_blocks_given_gender_func(gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_all_available_blocks_given_gender_service(gender,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content={"message": res[1]})  
+  elif res[0]:
+    return res[1]
 
 
 @router.get("/get_rooms_stat", response_model=GetRoomStat)
@@ -101,8 +104,8 @@ async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,bl
 
 # param: matric number
 @router.post("/assign_specific_space_in_room_to_student_in_session")
-async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,gender:Gender,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(mat_no,gender,room_id,session)
+async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(mat_no,room_id,session)
   if not res[0]:
     return JSONResponse(status_code=404, content={"message": res[1]})  
   elif res[0]:
@@ -194,9 +197,21 @@ async def list_students_with_accomodation_in_block_in_session_func(block_id:int,
   
 
 
-@router.get("/list_students_with_accomodation_in_session")
-async def list_students_with_accomodation_in_session_func( session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  pass
+@router.get("/list_students_with_accomodation_in_session_given_gender")
+async def list_students_with_accomodation_in_session_given_gender_func(  gender:Gender,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_students_with_accomodation_in_session_given_gender_service(gender, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
+
+
+
+
+
+
+
     # $students =   DB::table('t_students')->select('matric_number',
   #           DB::raw("CONCAT(t_students.surname,' ',t_students.firstname,' ',t_students.othernames) as full_name"),
   #           'sex','current_level','student_phone','picture',$param2 )

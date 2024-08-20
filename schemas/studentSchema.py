@@ -40,4 +40,23 @@ class StudentInBlockchema(BaseModel):
     gender: str
     description: str
 
+                                 
+class ListAllOccupantSchemaResponse(BaseModel):
+    matric_number: str
+    surname: str
+    firstname: str
+    gender: str
+    level: str
+    program: str
+    college: str
+    room_id :str
+    room_name :str
+    capacity: str
+    RoomModel: str
+    room_type: str
+    block_name: str
+    description: str
+    curr_session: str
+    created_at : str
+    updated_at: str
 

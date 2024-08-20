@@ -122,3 +122,21 @@ class GetRoomStat(BaseModel):
     female_c_room : int = 0
     male_norm_room : int = 0
     male_c_room : int = 0
+
+
+
+class ListAllBlockSchemeResponse(BaseModel):
+    id: int
+    block_name: str
+    description: str
+    gender: str
+    num_rooms_in_block: int
+    num_norm_rooms_in_block: int
+    num_corn_rooms_in_block: int
+    num_of_allocated_rooms: int
+    block_status: str
+    airy: bool
+    water_access: bool
+    proxy_to_portals_lodge: bool
+    created_at : str
+   

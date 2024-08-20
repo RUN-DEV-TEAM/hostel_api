@@ -199,22 +199,26 @@ async def random_assign_room_to_student_in_session_service(in_data:dict,get_room
     
 
 
-async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,gender:Gender,block_id:int, session:async_sessionmaker):
-    curr_session = external_services.get_current_academic_session()[1]
-    check_for_stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,curr_session,session)
-    if not check_for_stud_room[0]:
-        get_room = await admin_service_helper2.get_specific_available_room_in_block(gender, curr_session,block_id,session)
-        if get_room[0]:
-            allo_room = await admin_service_helper2.room_allocation_service(mat_no,get_room[1]['id'],get_room[1]['block_id'],
-                                                                            get_room[1]['num_rooms_in_block'], get_room[1]['num_of_allocated_rooms'],
-                                                                            curr_session,get_room[1]['capacity'],session)
-            if allo_room:
-                return True,allo_room[1]
+async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,block_id:int, session:async_sessionmaker):
+    stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
+    curr_session = external_services.get_current_academic_session()
+    if stud_profile[0] and curr_session[0]:
+        stud_obj = stud_profile[1] 
+        stud_obj['matric_number'] = mat_no
+        stud_obj['curr_session'] = curr_session[1]
+        check_for_stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
+        if not check_for_stud_room[0]:
+            get_room = await admin_service_helper2.get_specific_available_room_in_block(stud_obj["sex"], curr_session[1],block_id,session)
+            if get_room[0]:
+                allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],session)
+                if allo_room:
+                    return True,allo_room[1]
+            else:
+                return False, get_room[1] 
         else:
-            return False, get_room[1] 
+            return True, check_for_stud_room[1]
     else:
-        return True, check_for_stud_room[1]
-
+        return False,stud_profile[1]
 
 
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):

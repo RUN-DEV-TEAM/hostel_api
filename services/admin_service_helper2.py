@@ -11,6 +11,8 @@ from services import admin_service_helper1
 
 
 async def get_student_room_in_session(in_data:dict, session:async_sessionmaker):
+   print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+   print(in_data)
    result = await session.execute(select(StudentModel.id,StudentModel.matric_number,StudentModel.room_id,StudentModel.curr_session,
                                          StudentModel.surname,StudentModel.firstname,StudentModel.sex,StudentModel.program,StudentModel.level,
                                          StudentModel.deleted,StudentModel.created_at,StudentModel.updated_at
@@ -88,23 +90,23 @@ async def get_specific_available_space_in_room(gender:Gender,curr_session:str, r
  
     
 async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sessionmaker):
-    # try:
-    _allo_room = StudentModel(room_id=room_obj['id'],**stud_obj)
-    session.add(_allo_room)
-    no_stud_in_room = await get_number_of_occupant_in_room(room_obj['id'],session)
-    if no_stud_in_room[0]:
-        if room_obj['capacity'] == no_stud_in_room[1]:
-            await incre_update_room_status_given_room_id(room_obj['id'], session)
-    await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(room_obj['block_id'],room_obj['num_rooms_in_block'],room_obj['num_of_allocated_rooms'],session)
-    await session.commit()
-    await session.refresh(_allo_room)
-    room_dict = admin_service_helper1.build_response_dict(_allo_room,RoomAllocationResponseSchema)
-    room_details = await get_room_details_given_student_room_id(room_obj['id'],session)
-    if room_details[0]:
-        room_dict.update({"room_details":room_details[1]})
-    return True,room_dict
-    # except:
-    #     return False, {"message":"Error allocating room"}
+    try:
+        _allo_room = StudentModel(room_id=room_obj['id'],**stud_obj)
+        session.add(_allo_room)
+        no_stud_in_room = await get_number_of_occupant_in_room(room_obj['id'],session)
+        if no_stud_in_room[0]:
+            if room_obj['capacity'] == no_stud_in_room[1]:
+                await incre_update_room_status_given_room_id(room_obj['id'], session)
+        await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(room_obj['block_id'],room_obj['num_rooms_in_block'],room_obj['num_of_allocated_rooms'],session)
+        await session.commit()
+        await session.refresh(_allo_room)
+        room_dict = admin_service_helper1.build_response_dict(_allo_room,RoomAllocationResponseSchema)
+        room_details = await get_room_details_given_student_room_id(room_obj['id'],session)
+        if room_details[0]:
+            room_dict.update({"room_details":room_details[1]})
+        return True,room_dict
+    except:
+        return False, {"message":"Error allocating room"}
 
 
 

@@ -96,12 +96,12 @@ async def create_new_block_db_service(input:BlockSchemaCreate, session:async_ses
         if admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[0]:
             corn_room_stripped = admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[1]
             list_of_norm_room_num = [norm for norm in list_room_num if norm not in corn_room_stripped]
-        norm_room_objs = [RoomModel(room_name= f"room_{i}",capacity=block['norm_room_capacity'], room_type="NORMAL",block_id = block_model_inst.id) 
+        norm_room_objs = [RoomModel(room_name= f"room {i}",capacity=block['norm_room_capacity'], room_type="NORMAL",block_id = block_model_inst.id) 
                                 for i in list_of_norm_room_num]
         session.add_all(norm_room_objs)
         await session.commit()
         if len(corn_room_stripped)>0 and block['num_corn_rooms_in_block'] >0 and (int(num_norm_rooms_in_block) < int(block['num_rooms_in_block'])):
-            corn_room_objs = [RoomModel(room_name= f"room_{i}",capacity=block['corn_room_capacity'], room_type="CORNER",block_id = block_model_inst.id) 
+            corn_room_objs = [RoomModel(room_name= f"room {i}",capacity=block['corn_room_capacity'], room_type="CORNER",block_id = block_model_inst.id) 
                                     for i in corn_room_stripped]
             session.add_all(corn_room_objs)
             await session.commit()
@@ -169,6 +169,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 
 
 async def get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no, session):
+    mat_no = str(mat_no).strip()
     stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
     curr_session = external_services.get_current_academic_session()
     if stud_profile[0] and curr_session[0]:
@@ -179,7 +180,7 @@ async def get_stud_profile_and_randomly_assign_room_to_student_in_session_servic
         if res[0]:
             return True,res[1]
         else:
-            return False,res[0]
+            return False,res[1]
     else:
         return False,stud_profile[1]
     
@@ -222,26 +223,23 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
+
     if not stud_obj['accom_payable'] or not stud_obj['special_accom_payable']:
         return False,{"message":"Issue with datatype field ...accom_payable or special_accom_payable"}    
     if int(stud_obj['accom_paid']) < int(stud_obj['accom_payable']) :
             return False, {"message": f"#{stud_obj['accom_payable']}  is the amount payable for accommodation but you have just paid #{int(stud_obj['accom_paid'])}"}
-    elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :
+    elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :      
         get_room_condition = {'room_cat':''}
         if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
             get_room_condition['room_cat'] = 'SPECIAL'
-            print(stud_obj)
-            # fake response
-            # return True, {"room_cat":"SPECIAL","id":"23", "room_name":"room 13", "capacity":2,"room_type":"normal room","block_id":12,"block_name":"Guess House","block desc":"Guess House ", "room_condition":"GOOD" }              
+            print(stud_obj)         
             res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
             if res[0]:
                 return True, res[1]
             else:
                 return False, res[1]
         elif int(stud_obj['special_accom_paid']) == -1 and (int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) ):
-            get_room_condition['room_cat'] = 'GENERAL'
-            # fake response
-            # return True, {"room_cat":"GENERAL","id":"23", "room_name":"room 13", "capacity":6,"room_type":"cornal room","block_id":12,"block_name":"block 2","block desc":"Joseph", "room_condition":"GOOD" }             
+            get_room_condition['room_cat'] = 'GENERAL'           
             res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
             if res[0]:
                 return True, res[1]

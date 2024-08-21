@@ -31,7 +31,7 @@ async def get_user(email:str, session: async_sessionmaker = Depends(get_session)
 async def create_new_block(block_input:BlockSchemaCreate,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.create_new_block_db_service(block_input,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content= res[1])  
   elif res[0]:
     return res[1]
 
@@ -45,7 +45,7 @@ async def update_block(block_id:int ,block_input:BlockSchema,session: async_sess
 async def list_all_available_blocks_given_gender_func(gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.list_all_available_blocks_given_gender_service(gender,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
 
@@ -54,7 +54,7 @@ async def list_all_available_blocks_given_gender_func(gender:Gender, session: as
 async def get_rooms_stat(session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_rooms_stat_service(session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
   
@@ -65,7 +65,7 @@ async def get_rooms_stat(session: async_sessionmaker = Depends(get_session), use
 async def get_all_available_rooms_from_selected_block(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_all_available_rooms_from_selected_block_service(block_id,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
 
@@ -76,7 +76,7 @@ async def get_all_available_rooms_from_selected_block(block_id:int, session: asy
 async def get_all_occupied_rooms_from_selected_block_service(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_all_occupied_rooms_from_selected_block_service(block_id,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
 
@@ -86,7 +86,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 async def random_assign_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
   
@@ -97,7 +97,7 @@ async def random_assign_room_to_student_in_session_func(mat_no:str, session: asy
 async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.assign_room_in_specific_block_to_student_in_session_service(mat_no,block_id,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
 
@@ -107,7 +107,7 @@ async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,bl
 async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(mat_no,room_id,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]})  
+    return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
     return res[1]
 
@@ -117,7 +117,7 @@ async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,ro
 async def get_student_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_student_room_in_session_service(mat_no, session_id,session)
   if not res[0]:
-    return JSONResponse(status_code=404, content={"message": res[1]}) 
+    return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:
     return res[1]
 

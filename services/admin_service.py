@@ -6,7 +6,7 @@ from models.userModel import UserModel,BlockModel,RoomModel,StudentModel,BlockPr
 from schemas.userSchema import CreateUser,ListUser,ReturnSignUpUser,ListUser2
 from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2,BlockSchemaCreate,BlockRoomSchema,BlockProxityResponse,ListAllBlockSchemeResponse
 from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema,RoomSchemaWithOutBlockName
-from schemas.studentSchema import StudentRoomSchema,StudentInBlockchema,ListAllOccupantSchemaResponse
+from schemas.studentSchema import ListStudentInRoomSchema,StudentInBlockchema,ListAllOccupantSchemaResponse
 from schemas.helperSchema import Gender,RoomCondition
 from services import admin_service_helper1
 from services import admin_service_helper2
@@ -275,7 +275,8 @@ async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str
 
 
 async def get_student_room_in_session_service(mat_no:str,session_id:str, session:async_sessionmaker):
-    stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,session_id,session)
+    stud_obj = {"matric_number":mat_no, "curr_session":session_id}
+    stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
     if not stud_room[0]:
         return False, stud_room[1]
     else:
@@ -283,10 +284,11 @@ async def get_student_room_in_session_service(mat_no:str,session_id:str, session
 
 
 async def delete_student_from_room_in_session_service(mat_no:str,session_id:str, session:async_sessionmaker):
-     stud_room = await admin_service_helper2.get_student_room_in_session(mat_no,session_id,session)
+     stud_obj = {"matric_number":mat_no, "curr_session":session_id}
+     stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
      if stud_room[0]:
          await admin_service_helper2.decre_update_block_record_given_block_id(stud_room[1]['room_details']['block_id'],session)
-         res = await admin_service_helper2.decre_update_room_status_given_room_id(stud_room[1]['room_id'],stud_room[1]['id'],session)
+         res = await admin_service_helper2.decre_update_room_status_given_room_id(stud_room[1]['room_details']['id'],stud_room[1]['id'],session)
          await session.commit()
          return True,res[1]
      else:
@@ -296,17 +298,21 @@ async def delete_student_from_room_in_session_service(mat_no:str,session_id:str,
 
 async def list_student_in_room_in_session_service(room_id:int, session:async_sessionmaker):
     try:
-        stud_in_room = await session.execute(select(StudentModel.id,StudentModel.matric_number,StudentModel.room_id,
-                                            StudentModel.acad_session,StudentModel.deleted,StudentModel.created_at,StudentModel.updated_at)
+        stud_in_room = await session.execute(select(StudentModel.id,StudentModel.matric_number,StudentModel.surname,
+                                                   StudentModel.firstname, StudentModel.sex, StudentModel.level,
+                                                   StudentModel.program,StudentModel.dpt ,StudentModel.college,
+                                                    StudentModel.room_id,
+                                                    StudentModel.curr_session,StudentModel.deleted,StudentModel.created_at,StudentModel.updated_at)
                                     .where(StudentModel.room_id == room_id))
         result =  stud_in_room.all()
         if result:
-            resp = [admin_service_helper1.build_response_dict(room,StudentRoomSchema)  for room in result]
+            resp = [admin_service_helper1.build_response_dict(room,ListStudentInRoomSchema)  for room in result]
             return True,resp
         else:
             return False, {"message":"No student allocated to this room yet"}
     except:
         return False, {"message":f"Error fetching students in the room with id {room_id}"}
+
 
 
 async def get_room_status_in_session_service(room_id:int, session:async_sessionmaker):
@@ -340,29 +346,34 @@ async def  update_room_condition_in_session_service(room_id:int,room_condition:R
 
 
 
-async def list_rooms_with_empty_space_in_session_service(gender:Gender, session_id, session:async_sessionmaker):
+async def list_rooms_with_empty_space_in_session_service(gender:Gender, session:async_sessionmaker):
     try:
         # query = await session.execute(select(distinct(StudentModel.room_id)).where(StudentModel.acad_session==session_id))
         # list_occupied_room_in_session_id = query.scalars().all()
-        get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
-                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
-                                            .join(BlockModel, RoomModel.block_id == BlockModel.id)
-                                            .where(RoomModel.room_status == "AVAILABLE")
-                                            .where(BlockModel.block_status == "AVAILABLE")
-                                            .where(BlockModel.gender == gender))
-        rooms =  get_room.all()
-        if not rooms:
-            return False, {"message":"No empty space/room found"}
-        format_data = [admin_service_helper1.build_response_dict(room,RoomSchemaDetailed) for room in rooms ]
-        return True, format_data
-
+        curr_session = external_services.get_current_academic_session()
+        if  curr_session[0]:
+            get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+                                                BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
+                                                .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                                .where(RoomModel.room_status == "AVAILABLE")
+                                                .where(BlockModel.block_status == "AVAILABLE")
+                                                .where(BlockModel.gender == gender))
+            rooms =  get_room.all()
+            if not rooms:
+                return False, {"message":"No empty space/room found"}
+            format_data = [admin_service_helper1.build_response_dict(room,RoomSchemaDetailed) for room in rooms ]
+            return True, format_data
+        else:
+            return False,curr_session[1]
     except:
         return False, {"message":"Database error fetching list_rooms_with_empty_space_in_session_service"}
 
 
-async def list_occupied_rooms_in_session_service(gender:Gender, session_id, session:async_sessionmaker):
+
+async def list_occupied_rooms_in_session_service(gender:Gender, session:async_sessionmaker):
     try:
-        get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+        get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,
+                                              BlockModel.description,  BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "OCCUPIED")
@@ -394,9 +405,31 @@ async def list_blocks_with_empty_rooms_in_session_service(gender:Gender, session
         return False, {"message":"Database error fetching list_blocks_with_empty_rooms_in_session_service"}
  
 
+# 
+
+async def list_occupied_blocks_in_session_service(gender:Gender, session:async_sessionmaker):
+    try:
+        get_block = await session.execute(select(BlockModel.id,BlockModel.block_name,BlockModel.description,BlockModel.gender,BlockModel.block_status,
+                                                BlockModel.num_rooms_in_block,BlockModel.num_of_allocated_rooms,
+                                                BlockModel.num_norm_rooms_in_block, BlockModel.num_corn_rooms_in_block,
+                                                BlockModel.created_at,BlockModel.updated_at, BlockModel.deleted)
+                                            .where(BlockModel.block_status == "OCCUPIED")
+                                            .where(BlockModel.gender == gender))
+        blocks =  get_block.all()
+        if not blocks:
+            return False, {"message":"No block is occupied in session ..."}
+        format_data = [admin_service_helper1.build_response_dict(block,BlockRoomSchema2) for block in blocks ]
+        return True, format_data
+    except:
+        return False, {"message":"Database error fetching list_blocks_with_empty_rooms_in_session_service"}
+
+
+
 async def list_students_with_accomodation_in_block_in_session_service(block_id:int,  session:async_sessionmaker):
     try:
-        query = await session.execute(select(StudentModel.id, StudentModel.matric_number,StudentModel.acad_session,
+        query = await session.execute(select(StudentModel.id, StudentModel.matric_number,StudentModel.surname,
+                                             StudentModel.firstname,StudentModel.level,StudentModel.program,
+                                             StudentModel.dpt,StudentModel.college,StudentModel.curr_session,
                                             StudentModel.room_id,StudentModel.created_at, StudentModel.updated_at,
                                             RoomModel.room_name, RoomModel.capacity,RoomModel.room_type,RoomModel.room_status,RoomModel.room_condition,
                                             BlockModel.block_name,BlockModel.gender,BlockModel.description)
@@ -448,7 +481,14 @@ async def list_all_available_blocks_given_gender_service(gender:str, session:asy
         format_data = [admin_service_helper1.build_response_dict(stud,ListAllBlockSchemeResponse) for stud in studs ]
         return True, format_data   
       
- 
+
+
+def list_all_colleges_service():
+    res = admin_service_helper1.list_all_colleges()
+    if res:
+        return True, res
+    else:
+        return False, {"message":"Can't fetch college(s) at the moment"}
     # 
 # NOTE:  fetchone() vs scalar_one()
 # .where(RoomModel.id.notin_(list_occupied_room_in_session_id))

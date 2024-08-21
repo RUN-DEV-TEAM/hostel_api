@@ -77,3 +77,22 @@ def convert_true_false_to_yes_no(para:bool):
             return 'NO'
     else:
         return False, {"message":"Wrong data type supplied ... not a boolean"}
+    
+
+
+
+def list_all_colleges():
+    list_of_colleges = [
+            {"college_id":"1","college":"HUMANITIES","last_updated_by":"bulk uploaded","last_updated_date":"2012-08-17"},
+            {"college_id":"2","college":"MANAGEMENT SCIENCES","last_updated_by":"bulk uploaded","last_updated_date":"2012-08-17",},
+            {"college_id":"3","college":"NATURAL SCIENCES","last_updated_by":"bulk uploaded","last_updated_date":"2012-08-17"},
+            {"college_id":"4","college":"BASIC MEDICAL SCIENCES","last_updated_by":"bulk upload","last_updated_date":"2018-01-25"},
+            {"college_id":"5","college":"LAW","last_updated_by":"","last_updated_date":"2019-06-01"},
+            {"college_id":"6","college":"POSTGRADUATE STUDIES","last_updated_by":"teewhy","last_updated_date":"2020-03-05"},
+            {"college_id":"7","college":"BUILT ENVIRONMENT STUDIES","last_updated_by":"teewhy","last_updated_date":"2020-03-05"},
+            {"college_id":"8","college":"ENGINEERING","last_updated_by":"teewhy","last_updated_date":"2020-03-05"},
+            {"college_id":"9","college":"SOCIAL SCIENCES","last_updated_by":"teewhy","last_updated_date":"2020-03-05"},
+            {"college_id":"10","college":"EDUCATION","last_updated_by":"teewhy","last_updated_date":"2024-01-16"},
+             {"college_id":"11","college":"DEST","last_updated_by":"teewhy","last_updated_date":"2024-01-16"},
+            ]
+    return list_of_colleges

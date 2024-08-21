@@ -24,9 +24,35 @@ class StudentRoomSchema(BaseModel):
     updated_at: str
 
 
+
+
+
+class ListStudentInRoomSchema(BaseModel):
+    id: int
+    matric_number: str
+    surname: str
+    firstname: str
+    sex: str
+    level: str
+    program: str
+    dpt: str
+    college: str
+    room_id: int
+    curr_session: str
+    created_at: str
+    updated_at: str
+
+
+
 class StudentInBlockchema(BaseModel):
     id: int
     matric_number: str
+    surname: str
+    firstname: str
+    level: str
+    program: str
+    dpt: str
+    college: str
     room_id: int
     curr_session: str
     created_at: str

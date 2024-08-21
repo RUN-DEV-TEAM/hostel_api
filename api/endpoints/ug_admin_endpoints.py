@@ -160,8 +160,8 @@ async def update_room_condition_in_session_func(room_id:int, room_condition:Room
   
 
 @router.get("/list_rooms_with_empty_space_in_session")
-async def list_rooms_with_empty_space_in_session_func(gender:Gender,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  res = await admin_service.list_rooms_with_empty_space_in_session_service(gender, session_id, session)
+async def list_rooms_with_empty_space_in_session_func(gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_rooms_with_empty_space_in_session_service(gender, session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:
@@ -169,8 +169,8 @@ async def list_rooms_with_empty_space_in_session_func(gender:Gender,session_id:s
   
 
 @router.get("/list_occupied_rooms_in_session")
-async def list_occupied_rooms_in_session_func(gender:Gender,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  res = await admin_service.list_occupied_rooms_in_session_service(gender, session_id, session)
+async def list_occupied_rooms_in_session_func(gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_occupied_rooms_in_session_service(gender, session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:
@@ -180,6 +180,14 @@ async def list_occupied_rooms_in_session_func(gender:Gender,session_id:str, sess
 @router.get("/list_blocks_with_empty_rooms_in_session")
 async def list_blocks_with_empty_rooms_in_session_func( gender:Gender,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.list_blocks_with_empty_rooms_in_session_service(gender, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
+@router.get("/list_occupied_blocks_in_session")
+async def list_occupied_blocks_in_session_func( gender:Gender,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_occupied_blocks_in_session_service(gender, session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:
@@ -200,6 +208,15 @@ async def list_students_with_accomodation_in_block_in_session_func(block_id:int,
 @router.get("/list_students_with_accomodation_in_session_given_gender")
 async def list_students_with_accomodation_in_session_given_gender_func(  gender:Gender,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.list_students_with_accomodation_in_session_given_gender_service(gender, session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1]) 
+  elif res[0]:
+    return res[1]
+  
+
+@router.get("/list_all_colleges")
+def list_all_colleges_func( ):
+  res =  admin_service.list_all_colleges_service()
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:

@@ -47,6 +47,7 @@ class RoomSchemaDetailed(BaseModel):
     room_type: str
     block_id : int 
     block_name : str
+    description: str
     num_rooms_in_block: int
     num_of_allocated_rooms: int
     room_status : str
@@ -72,6 +73,7 @@ class RoomSchemaDetailed(BaseModel):
 
 
 class RoomAllocationResponseSchema(BaseModel):
+    id: int
     matric_number:str
     surname:str
     firstname:str

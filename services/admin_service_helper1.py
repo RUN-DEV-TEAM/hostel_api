@@ -94,5 +94,6 @@ def list_all_colleges():
             {"college_id":"9","college":"SOCIAL SCIENCES","last_updated_by":"teewhy","last_updated_date":"2020-03-05"},
             {"college_id":"10","college":"EDUCATION","last_updated_by":"teewhy","last_updated_date":"2024-01-16"},
              {"college_id":"11","college":"DEST","last_updated_by":"teewhy","last_updated_date":"2024-01-16"},
+             {"college_id":"12","college":"ADMIN","last_updated_by":"teewhy","last_updated_date":"2024-01-16"},
             ]
     return list_of_colleges

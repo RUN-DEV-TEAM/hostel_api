@@ -85,30 +85,37 @@ async def create_new_block_db_service(input:BlockSchemaCreate, session:async_ses
                             airy= admin_service_helper1.convert_true_false_to_yes_no(block['airy']),
                             water_access=admin_service_helper1.convert_true_false_to_yes_no(block['water']),proxy_to_portals_lodge=admin_service_helper1.convert_true_false_to_yes_no(block['access_to_lodge']))
         session.add(block_model_inst)
-        await session.commit()
-        await session.refresh(block_model_inst)
+        await session.flush()
+        # await session.refresh(block_model_inst)
         if admin_service_helper1.strip_list_of_dict(block['block_access_to_fac'])[0]:
             block_fac_access_stripped = admin_service_helper1.strip_list_of_dict(block['block_access_to_fac'])[1]
             block_proxi = [BlockProximityToFacultyModel(faculty=el, block_id=block_model_inst.id) for el in block_fac_access_stripped]
             session.add_all(block_proxi)
-            await session.commit()
+            # await session.commit()
+        norm_room_objs = []
         list_room_num = [num for num in range(1, int(block['num_rooms_in_block'])+1)]
+        corn_room_stripped = admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[1]
         if admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[0]:
-            corn_room_stripped = admin_service_helper1.strip_list_of_dict(block['corner_rooms'])[1]
             list_of_norm_room_num = [norm for norm in list_room_num if norm not in corn_room_stripped]
-        norm_room_objs = [RoomModel(room_name= f"room {i}",capacity=block['norm_room_capacity'], room_type="NORMAL",block_id = block_model_inst.id) 
+            norm_room_objs = [RoomModel(room_name= f"room {i}",capacity=block['norm_room_capacity'], room_type="NORMAL",block_id = block_model_inst.id) 
                                 for i in list_of_norm_room_num]
+        else:
+            list_of_norm_room_num = [norm for norm in list_room_num ]
+            norm_room_objs = [RoomModel(room_name= f"room {i}",capacity=block['norm_room_capacity'], room_type="NORMAL",block_id = block_model_inst.id) 
+                                for i in list_of_norm_room_num]        
         session.add_all(norm_room_objs)
-        await session.commit()
+        # await session.commit()
+        corn_room_objs = []
         if len(corn_room_stripped)>0 and block['num_corn_rooms_in_block'] >0 and (int(num_norm_rooms_in_block) < int(block['num_rooms_in_block'])):
             corn_room_objs = [RoomModel(room_name= f"room {i}",capacity=block['corn_room_capacity'], room_type="CORNER",block_id = block_model_inst.id) 
                                     for i in corn_room_stripped]
             session.add_all(corn_room_objs)
-            await session.commit()
+                # await session.commit()
     except:
          await session.rollback()
-         return False,{"message":"Error creating block and rooms"} 
+         return False,{"message":"Error creating block and rooms is like there is a duplicate block"} 
     else:
+        await session.commit()
         block_dict = admin_service_helper1.build_response_dict(block_model_inst,BlockSchema) 
         list_norm_rooms_created = [admin_service_helper1.build_response_dict(norm_obj,RoomSchemaWithOutBlockName)  for norm_obj in norm_room_objs ]
         list_corn_rooms_created = [admin_service_helper1.build_response_dict(corn_obj,RoomSchemaWithOutBlockName)  for corn_obj in corn_room_objs ]

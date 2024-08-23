@@ -1,6 +1,6 @@
 from passlib.context import CryptContext
 from fastapi import Depends, status
-from fastapi import  HTTPException
+from fastapi import  HTTPException , Response
 from datetime import datetime,timedelta
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from services import admin_service
@@ -17,6 +17,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_sessionmaker = Depends(get_session)):
+    email = ''
     credential_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                          detail="Could not validate credentials", 
                                          headers= {"www-Authenticate": "Bearer"})
@@ -25,6 +26,12 @@ async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_
         email: str = payload.get("sub")
         if email is None:
             raise credential_exception
+    except jwt.ExpiredSignatureError:
+        # Token has expired, renew it
+        new_token = create_access_token(data={"sub":email},expires_delta=90)
+        response = Response(content=new_token, media_type="text/plain")
+        response.headers["x-access-token"] = new_token
+        return response
     except:
         raise credential_exception
     user = await admin_service.get_user_4_auth_by_email_service(email, session)
@@ -39,7 +46,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     if expires_delta:
         expire = datetime.utcnow() + timedelta(minutes=int(expires_delta))
     else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+        expire = datetime.utcnow() + timedelta(minutes=90)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode,"cd03aff8a2d3041e594dad10d5032985d1cc2fd831826b26ac6f987ab4d31a61",algorithm="HS256")
     return encoded_jwt
@@ -72,7 +79,8 @@ async def authenticate_user(email:str, password:str,  session: async_sessionmake
     user = user[1]
     if not verify_password(password, user["password"]):
         return False,{"message": "Invalid Email/Password supplied!"}
-    user.update({"token": create_access_token(data={"sub":user["email"]},expires_delta=30)})
+    user.update({"token": create_access_token(data={"sub":user["email"]},expires_delta=90)})
     return True,user 
+
 
 

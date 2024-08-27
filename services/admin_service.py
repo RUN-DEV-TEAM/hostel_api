@@ -198,8 +198,10 @@ async def random_assign_room_to_student_in_session_service(in_data:dict,get_room
         get_room = await admin_service_helper2.get_random_available_room(in_data,get_room_condition,session)
         if get_room[0]:
             allo_room = await admin_service_helper2.room_allocation_service(in_data,get_room[1],session)
-            if allo_room:
+            if allo_room[0]:
                 return True,allo_room[1]
+            else:
+                return False, allo_room[1] 
         else:
             return False, get_room[1] 
     else:
@@ -353,18 +355,19 @@ async def  update_room_condition_in_session_service(room_id:int,room_condition:R
 
 
 
-async def list_rooms_with_empty_space_in_session_service(gender:Gender, session:async_sessionmaker):
+async def list_rooms_with_empty_space_in_session_service(gender:Gender,page,page_size, session:async_sessionmaker):
     try:
         # query = await session.execute(select(distinct(StudentModel.room_id)).where(StudentModel.acad_session==session_id))
         # list_occupied_room_in_session_id = query.scalars().all()
         curr_session = external_services.get_current_academic_session()
         if  curr_session[0]:
+            offset = (page - 1)*page_size
             get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                                 BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                                 .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                                 .where(RoomModel.room_status == "AVAILABLE")
                                                 .where(BlockModel.block_status == "AVAILABLE")
-                                                .where(BlockModel.gender == gender))
+                                                .where(BlockModel.gender == gender).offset(offset).limit(page_size))
             rooms =  get_room.all()
             if not rooms:
                 return False, {"message":"No empty space/room found"}

@@ -26,7 +26,9 @@ async def get_student_profile_and_allocate_room_to_the_student_service(mat_no:st
         stud_obj['matric_number'] = mat_no
         stud_obj['curr_session'] = curr_session[1]
         res = await admin_service.first_condition_before_ramdom_room_allocation(stud_obj,session)
-        return True,res[1]
+        if res[0]:
+            return True,res[1]
+        return False,res[1]
     else:
         return False,stud_profile[1]
 

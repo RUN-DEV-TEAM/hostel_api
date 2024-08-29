@@ -9,11 +9,19 @@ from jose import JWTError, jwt
 from dependencies import get_session
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 import os
-
+from schemas.helperSchema import UserType
+from schemas.userSchema import ReturnSignUpUser
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
+
+def require_permission(required_role: UserType):
+    def permission_dependency(user: ReturnSignUpUser =Depends(get_current_user)):
+        if required_role != user['user_type']:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role/permissions")
+        return user
+    return permission_dependency
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_sessionmaker = Depends(get_session)):
@@ -37,7 +45,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_
     user = await admin_service.get_user_4_auth_by_email_service(email, session)
     if user is None:
         raise credential_exception
-    return user
+    return user[1]
 
 
 

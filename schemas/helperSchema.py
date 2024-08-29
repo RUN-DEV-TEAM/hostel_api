@@ -35,6 +35,7 @@ class UserStatus(Enum):
 class UserType(Enum):
     ADMIN = 'ADMIN'
     PORTAL = 'PORTAL'
+    SUPER = 'SUPER'
 
 # room_status
 class RoomStatus(Enum):

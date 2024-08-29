@@ -71,6 +71,7 @@ class ListAllOccupantSchemaResponse(BaseModel):
     matric_number: str
     surname: str
     firstname: str
+    fullname: str
     gender: str
     level: str
     program: str
@@ -81,6 +82,7 @@ class ListAllOccupantSchemaResponse(BaseModel):
     RoomModel: str
     room_type: str
     block_name: str
+    room_block_details: str
     description: str
     curr_session: str
     created_at : str

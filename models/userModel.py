@@ -95,6 +95,8 @@ class StudentModel(Base):
     accom_payable = Column(String(65), nullable=True)
     special_accom_paid = Column(String(65), nullable=True)
     special_accom_payable = Column(String(65), nullable=True)
+    exemption_id = Column(Integer, nullable=True)
+    exemption_reason = Column(String(191), nullable=True)
     room_id = Column(Integer, ForeignKey('t_rooms.id'), nullable=False)
     curr_session = Column(String(9), nullable=False)
     deleted = Column(Enum(Deleted), default=Deleted.N)

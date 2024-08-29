@@ -97,3 +97,13 @@ def list_all_colleges():
              {"college_id":"12","college":"ADMIN","last_updated_by":"teewhy","last_updated_date":"2024-01-16"},
             ]
     return list_of_colleges
+
+
+
+def list_of_matric_number_with_health_issue(matno:str):
+    list_mat = [
+
+    ]
+    if matno in list_mat:
+        return True
+    return False

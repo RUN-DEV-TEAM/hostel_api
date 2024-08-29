@@ -1,7 +1,6 @@
 from datetime import datetime
 from sqlalchemy import func,update, and_,delete
-from models.userModel import RoomModel,StudentModel,BlockModel
-from schemas.studentSchema import StudentRoomSchema
+from models.userModel import RoomModel,StudentModel,BlockModel,BlockProximityToFacultyModel
 from schemas.roomSchema import RoomSchemaDetailed,RoomAllocationResponseSchema,RoomSchemaDetailedResponse
 from schemas.helperSchema import Gender
 from sqlalchemy.ext.asyncio import async_sessionmaker
@@ -27,24 +26,43 @@ async def get_student_room_in_session(in_data:dict, session:async_sessionmaker):
 
 
 
-async def get_random_available_room(stud_obj:dict,get_room_condition:dict, session:async_sessionmaker):
-
-    if get_room_condition['room_cat'] == "GENERAL":
+async def backup_room_getter(stud_obj,health_block_counter, session):
+    room_res = await query_db_for_random_available_room_with_faculty_proximity_condition(stud_obj, session)
+    if room_res[0]:
+        return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
+    else:
         room_res = await query_db_for_random_available_room(stud_obj,session)
         if room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
         else:
-            return False,room_res[1]
+            if health_block_counter > 60:
+                room_res = await query_db_for_random_available_room_for_health_challenge_students(stud_obj, session)
+                if room_res[0]:
+                    return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
+                else:
+                    return False,room_res[1] 
+
+
+
+async def get_random_available_room(stud_obj:dict,get_room_condition:dict, session:async_sessionmaker):
+    
+    health_block_counter = 20 #this will be from DB
+    if get_room_condition['health'] and health_block_counter <= 60 and get_room_condition['room_cat'] == "GENERAL":
+        room_res = await query_db_for_random_available_room_for_health_challenge_students(stud_obj, session)
+        if room_res[0]:
+            return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
+        else:
+          return await backup_room_getter(stud_obj,health_block_counter, session)
+    elif get_room_condition['room_cat'] == "GENERAL":
+        return await backup_room_getter(stud_obj,health_block_counter, session)  
     elif get_room_condition['room_cat'] == "SPECIAL":
         room_res = await query_db_for_random_room_in_quest_house(stud_obj, session)
         if  room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
         else:
-            room_res = await query_db_for_random_available_room(stud_obj,session)
-            if room_res[0]:
-                return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
-            else:
-                return False,room_res[1]            
+            return await backup_room_getter(stud_obj,health_block_counter, session) 
+    else:
+        return False, {"message":"No condition met for getting random available room"}         
 
 
 
@@ -103,6 +121,7 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sess
         if room_details[0]:
             room_dict.update({"room_details":room_details[1]})
         return True,room_dict
+
     except:
         return False, {"message":"Error allocating room"}
 
@@ -188,6 +207,7 @@ async def query_db_for_random_available_room(stud_obj,session:async_sessionmaker
                                             .where(RoomModel.room_status == "AVAILABLE")
                                             .where(BlockModel.block_status == "AVAILABLE")
                                             .where(BlockModel.gender == stud_obj['sex'])
+                                            .where(BlockModel.proxy_to_portals_lodge == 'NO')
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -195,6 +215,44 @@ async def query_db_for_random_available_room(stud_obj,session:async_sessionmaker
   if not room:
       return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(stud_obj['sex'])} in {stud_obj['curr_session']} academic session"}
   return True, room
+
+
+async def query_db_for_random_available_room_for_health_challenge_students(stud_obj,session:async_sessionmaker):
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
+                                            .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                            .where(RoomModel.room_status == "AVAILABLE")
+                                            .where(BlockModel.block_status == "AVAILABLE")
+                                            .where(BlockModel.gender == stud_obj['sex'])
+                                            .where(BlockModel.proxy_to_portals_lodge == 'YES')
+                                            .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == stud_obj['college_id'])))
+                                            .with_for_update()
+                                            .order_by(func.random())
+                                            .limit(1))
+  room = res.fetchone()
+  if not room:
+      return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(stud_obj['sex'])} in {stud_obj['curr_session']} academic session"}
+  return True, room
+
+
+
+async def query_db_for_random_available_room_with_faculty_proximity_condition(stud_obj,session:async_sessionmaker):
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
+                                            .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                            .where(RoomModel.room_status == "AVAILABLE")
+                                            .where(BlockModel.block_status == "AVAILABLE")
+                                            .where(BlockModel.gender == stud_obj['sex'])
+                                            .where(BlockModel.proxy_to_portals_lodge == 'NO')
+                                            .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == stud_obj['college_id'])))
+                                            .with_for_update()
+                                            .order_by(func.random())
+                                            .limit(1))
+  room = res.fetchone()
+  if not room:
+      return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(stud_obj['sex'])} in {stud_obj['curr_session']} academic session"}
+  return True, room
+
 
 
 async def  query_db_for_random_room_in_quest_house(stud_obj, session):

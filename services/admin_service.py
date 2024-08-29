@@ -128,19 +128,41 @@ async def create_new_block_db_service(input:BlockSchemaCreate, session:async_ses
 
 
 async def get_rooms_stat_service(session:async_sessionmaker):
-   try:
+   try:   
+       query = await session.execute(select(RoomModel.room_type, BlockModel.gender)
+                                                .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                                .where(RoomModel.room_status == "AVAILABLE")
+                                                .where(BlockModel.block_status == "AVAILABLE")
+                                                .where(BlockModel.deleted == 'N'))
+       query_resp = query.all()
        result = await session.execute(select(BlockModel.num_norm_rooms_in_block,BlockModel.num_corn_rooms_in_block,
                                       BlockModel.gender ).where(BlockModel.deleted == 'N'))
-       room_block_stat = result.all()
-       sum_male_norm_rooms = sum([ row[0] for row in room_block_stat if row[2].value == 'M'])
-       sum_male_corn_rooms = sum([ row[1] for row in room_block_stat if row[2].value == 'M'])
-       sum_female_norm_rooms = sum([ row[0] for row in room_block_stat if row[2].value == 'F'])
-       sum_female_corn_rooms = sum([ row[1] for row in room_block_stat if row[2].value == 'F'])
+       room_block_stat2 = result.all()
+       total_female_available_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'F'])
+       total_female_available_corner_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'F' and row[0].value == 'CORNER'] )
+       total_female_available_normal_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'F' and row[0].value == 'NORMAL'])
+       total_male_available_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'M'])
+       total_male_available_corner_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'M' and row[0].value == 'CORNER'])
+       total_male_available_normal_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'M' and row[0].value == 'NORMAL'])
+
+       total_male_normal_room_in_session = sum([ row[0] for row in room_block_stat2 if row[2].value == 'M'])
+       total_male_corner_room_in_session = sum([ row[1] for row in room_block_stat2 if row[2].value == 'M'])
+       total_male_rooms_in_session = total_male_normal_room_in_session + total_male_corner_room_in_session
+       total_female_normal_room_in_session = sum([ row[0] for row in room_block_stat2 if row[2].value == 'F'])
+       total_female_corner_room_in_session = sum([ row[1] for row in room_block_stat2 if row[2].value == 'F'])
+       total_female_rooms_in_session = total_female_normal_room_in_session + total_female_corner_room_in_session
    except:
        return False,{"Message":"Error fetching or summing blocks/rooms statistics"}
    else:
-       return True,{'male_norm_room':sum_male_norm_rooms,'male_c_room':sum_male_corn_rooms,
-                    'female_norm_room':sum_female_norm_rooms,'female_c_room':sum_female_corn_rooms}
+       return True,{ 'total_female_rooms_in_session': total_female_rooms_in_session,
+                     'total_female_normal_room_in_session':total_female_normal_room_in_session,'total_female_corner_room_in_session':total_female_corner_room_in_session,
+                        'total_female_available_room_in_session':total_female_available_room_in_session,'total_female_available_normal_room_in_session':total_female_available_normal_room_in_session,
+                        'total_female_available_corner_room_in_session':total_female_available_corner_room_in_session,
+                         'total_male_rooms_in_session':total_male_rooms_in_session,
+                        'total_male_normal_room_in_session':total_male_normal_room_in_session,'total_male_corner_room_in_session':total_male_corner_room_in_session,
+                      'total_male_available_room_in_session':total_male_available_room_in_session,  'total_male_available_normal_room_in_session':total_male_available_normal_room_in_session,
+                      'total_male_available_corner_room_in_session':total_male_available_corner_room_in_session,
+                     }
 
 
 
@@ -191,7 +213,7 @@ async def get_stud_profile_and_randomly_assign_room_to_student_in_session_servic
     else:
         return False,stud_profile[1]
     
-
+    
 async def random_assign_room_to_student_in_session_service(in_data:dict,get_room_condition:dict, session:async_sessionmaker):
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(in_data,session)
     if not check_for_stud_room[0]:
@@ -233,12 +255,18 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
 
+    get_room_condition = {'room_cat':'GENERAL', 'health': admin_service_helper1.list_of_matric_number_with_health_issue(stud_obj['matric_number']) }
+    if int(stud_obj['exemption_id']) >0 and int(stud_obj['exemption_id']) == 999:         
+        res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
+        if res[0]:
+            return True, res[1]
+        else:
+            return False, res[1]   
     if not stud_obj['accom_payable'] or not stud_obj['special_accom_payable']:
         return False,{"message":"Issue with datatype field ...accom_payable or special_accom_payable"}    
     if int(stud_obj['accom_paid']) < int(stud_obj['accom_payable']) :
             return False, {"message": f"#{stud_obj['accom_payable']}  is the amount payable for accommodation but you have just paid #{int(stud_obj['accom_paid'])}"}
-    elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :      
-        get_room_condition = {'room_cat':''}
+    elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :  
         if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
             get_room_condition['room_cat'] = 'SPECIAL'
             print(stud_obj)         
@@ -255,7 +283,8 @@ async def first_condition_before_ramdom_room_allocation(stud_obj,session):
             else:
                 return False, res[1]
         else:
-            return False,{"message":"Ops!! I doubt if you have actually paid minimum requirement for accommodation in this session"}
+            return False,{"message":"Ops!! I doubt if you have actually paid minimum requirement for accommodation in this session"}         
+
     else:
         return False,{"message":"Sorry!! Your acclaimed payment for accommodation can not be verified now"}    
 
@@ -471,7 +500,12 @@ async def list_students_with_accomodation_in_session_given_gender_service(gender
             studs = query.all()
             if not studs:
                     return False, {"message":f"No occupant(s) found for  ... in {curr_session[1]}"}
-            format_data = [admin_service_helper1.build_response_dict(stud,ListAllOccupantSchemaResponse) for stud in studs ]
+            format_data = []
+            for stud in studs:
+                room_obj = admin_service_helper1.build_response_dict(stud,ListAllOccupantSchemaResponse)
+                room_obj['fullname'] = f"{room_obj['surname']} {room_obj['firstname']}"
+                room_obj['room_block_details'] = f"{room_obj['block_name']} {room_obj['room_name']}"
+                format_data.append(room_obj)
             return True, format_data   
         else:
             return False, curr_session[1]
@@ -502,3 +536,9 @@ def list_all_colleges_service():
     # 
 # NOTE:  fetchone() vs scalar_one()
 # .where(RoomModel.id.notin_(list_occupied_room_in_session_id))
+
+  #    f_query = await session.execute(select(func.count())
+    #                                             .select_from(RoomModel).join(BlockModel, RoomModel.block_id == BlockModel.id)
+    #                                             .where(RoomModel.room_status == "AVAILABLE").where(BlockModel.block_status == "AVAILABLE")
+    #                                             .where(BlockModel.deleted == 'N').where(BlockModel.gender == 'F'))
+#    f_stat =  f_query.scalar()

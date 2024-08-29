@@ -118,10 +118,19 @@ class CustomValidationError(Exception):
 
 
 class GetRoomStat(BaseModel):
-    female_norm_room: int = 0
-    female_c_room : int = 0
-    male_norm_room : int = 0
-    male_c_room : int = 0
+    total_female_rooms_in_session : int = 0
+    total_female_normal_room_in_session: int = 0
+    total_female_corner_room_in_session : int = 0
+    total_female_available_room_in_session : int = 0
+    total_female_available_normal_room_in_session: int = 0
+    total_female_available_corner_room_in_session: int = 0
+    total_male_rooms_in_session : int = 0
+    total_male_normal_room_in_session : int = 0
+    total_male_corner_room_in_session : int = 0
+    total_male_available_room_in_session : int = 0 
+    total_male_available_normal_room_in_session: int = 0
+    total_male_available_corner_room_in_session: int = 0
+
 
 
 

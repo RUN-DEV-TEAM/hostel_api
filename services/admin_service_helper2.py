@@ -40,7 +40,9 @@ async def backup_room_getter(stud_obj,health_block_counter, session):
                 if room_res[0]:
                     return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
                 else:
-                    return False,room_res[1] 
+                    return False,room_res[1]
+            else:
+                return False, {"message":"No room available at the moment for allocation"}
 
 
 
@@ -54,13 +56,13 @@ async def get_random_available_room(stud_obj:dict,get_room_condition:dict, sessi
         else:
           return await backup_room_getter(stud_obj,health_block_counter, session)
     elif get_room_condition['room_cat'] == "GENERAL":
-        return await backup_room_getter(stud_obj,health_block_counter, session)  
+          return await backup_room_getter(stud_obj,health_block_counter, session)
     elif get_room_condition['room_cat'] == "SPECIAL":
         room_res = await query_db_for_random_room_in_quest_house(stud_obj, session)
         if  room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
         else:
-            return await backup_room_getter(stud_obj,health_block_counter, session) 
+            return await backup_room_getter(stud_obj,health_block_counter, session)
     else:
         return False, {"message":"No condition met for getting random available room"}         
 

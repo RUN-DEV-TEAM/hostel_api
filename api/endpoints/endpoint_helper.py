@@ -18,9 +18,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
 
 def require_permission(required_role: UserType):
     def permission_dependency(user: ReturnSignUpUser =Depends(get_current_user)):
-        if not user:
+        if not isinstance(user, dict):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                         detail="Could not validate credentials", 
+                                         detail="Could not validate credentials, kindly reauthenticate yourself for new token", 
                                          headers= {"www-Authenticate": "Bearer"})
         if required_role != user['user_type']:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient role/permissions")

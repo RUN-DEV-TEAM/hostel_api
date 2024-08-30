@@ -129,28 +129,30 @@ async def create_new_block_db_service(input:BlockSchemaCreate, session:async_ses
 
 async def get_rooms_stat_service(session:async_sessionmaker):
    try:   
-       query = await session.execute(select(RoomModel.room_type, BlockModel.gender)
+       query1 = await session.execute(select(RoomModel.room_type, BlockModel.gender,)
                                                 .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                                 .where(RoomModel.room_status == "AVAILABLE")
                                                 .where(BlockModel.block_status == "AVAILABLE")
                                                 .where(BlockModel.deleted == 'N'))
-       query_resp = query.all()
-       result = await session.execute(select(BlockModel.num_norm_rooms_in_block,BlockModel.num_corn_rooms_in_block,
-                                      BlockModel.gender ).where(BlockModel.deleted == 'N'))
-       room_block_stat2 = result.all()
-       total_female_available_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'F'])
-       total_female_available_corner_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'F' and row[0].value == 'CORNER'] )
-       total_female_available_normal_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'F' and row[0].value == 'NORMAL'])
-       total_male_available_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'M'])
-       total_male_available_corner_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'M' and row[0].value == 'CORNER'])
-       total_male_available_normal_room_in_session = len([row[1].value for row in query_resp  if row[1].value == 'M' and row[0].value == 'NORMAL'])
+       query_resp1 = query1.all()
+       total_female_available_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F'])
+       total_female_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'CORNER'] )
+       total_female_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'NORMAL'])
+       total_male_available_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M'])
+       total_male_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'CORNER'])
+       total_male_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'NORMAL'])
 
-       total_male_normal_room_in_session = sum([ row[0] for row in room_block_stat2 if row[2].value == 'M'])
-       total_male_corner_room_in_session = sum([ row[1] for row in room_block_stat2 if row[2].value == 'M'])
+       query2 = await session.execute(select(BlockModel.num_norm_rooms_in_block,BlockModel.num_corn_rooms_in_block,
+                                      BlockModel.gender ).where(BlockModel.deleted == 'N'))
+       query_resp2 = query2.all()
+       total_male_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'M'])
+       total_male_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'M'])
        total_male_rooms_in_session = total_male_normal_room_in_session + total_male_corner_room_in_session
-       total_female_normal_room_in_session = sum([ row[0] for row in room_block_stat2 if row[2].value == 'F'])
-       total_female_corner_room_in_session = sum([ row[1] for row in room_block_stat2 if row[2].value == 'F'])
+       total_female_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'F'])
+       total_female_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'F'])
        total_female_rooms_in_session = total_female_normal_room_in_session + total_female_corner_room_in_session
+
+    #    query3 = await session.execute(select())
    except:
        return False,{"Message":"Error fetching or summing blocks/rooms statistics"}
    else:
@@ -258,7 +260,7 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
 
     get_room_condition = {'room_cat':'GENERAL'}
-    if int(stud_obj['exemption_id']) >0 and int(stud_obj['exemption_id']) == 999:         
+    if int(stud_obj['exemption_id']) >0:         
         res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
         if res[0]:
             return True, res[1]

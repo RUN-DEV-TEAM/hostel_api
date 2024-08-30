@@ -205,6 +205,7 @@ async def get_stud_profile_and_randomly_assign_room_to_student_in_session_servic
         stud_obj = stud_profile[1]
         stud_obj['matric_number'] = mat_no
         stud_obj['curr_session'] = curr_session[1]
+        stud_obj['medical_attention']= admin_service_helper1.list_of_matric_number_with_health_issue(mat_no)
         res = await first_condition_before_ramdom_room_allocation(stud_obj,session)
         if res[0]:
             return True,res[1]
@@ -238,6 +239,7 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
         stud_obj = stud_profile[1] 
         stud_obj['matric_number'] = mat_no
         stud_obj['curr_session'] = curr_session[1]
+        stud_obj['medical_attention']= admin_service_helper1.list_of_matric_number_with_health_issue(mat_no)
         check_for_stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
         if not check_for_stud_room[0]:
             get_room = await admin_service_helper2.get_specific_available_room_in_block(stud_obj["sex"], curr_session[1],block_id,session)
@@ -255,7 +257,7 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
 
-    get_room_condition = {'room_cat':'GENERAL', 'health': admin_service_helper1.list_of_matric_number_with_health_issue(stud_obj['matric_number']) }
+    get_room_condition = {'room_cat':'GENERAL'}
     if int(stud_obj['exemption_id']) >0 and int(stud_obj['exemption_id']) == 999:         
         res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
         if res[0]:
@@ -297,6 +299,7 @@ async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str
         stud_obj = stud_profile[1] 
         stud_obj['matric_number'] = mat_no
         stud_obj['curr_session'] = curr_session[1]
+        stud_obj['medical_attention']= admin_service_helper1.list_of_matric_number_with_health_issue(mat_no)
         check_for_stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
         if not check_for_stud_room[0]:
             get_room = await admin_service_helper2.get_specific_available_space_in_room(stud_obj,room_id,session)

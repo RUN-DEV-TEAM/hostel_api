@@ -78,6 +78,7 @@ class RoomAllocationResponseSchema(BaseModel):
     surname:str
     firstname:str
     sex:str
+    medical_attention: str
     program: str
     level: str
     curr_session:str

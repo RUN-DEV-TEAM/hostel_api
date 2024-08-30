@@ -3,7 +3,9 @@ from enum import Enum
 
 
 
-
+class MedicalAttention(Enum):
+    YES = 'YES'
+    NO = 'NO'
 
 class PortalsLodgeProxy(Enum):
     YES = 'YES'

@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, text, ForeignKey,Enum,
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from db.connection import Base
-from schemas.helperSchema import ( RoomCondition,RoomStatus,RoomType,Deleted,Gender,
+from schemas.helperSchema import ( RoomCondition,RoomStatus,RoomType,Deleted,Gender,MedicalAttention,
                                   BlockStatus,UserStatus,UserType, Airy, WaterAccess,PortalsLodgeProxy)
 from pydantic import ValidationError
 # from models.studentModel import StudentModel
@@ -84,6 +84,7 @@ class StudentModel(Base):
     firstname = Column(String(100), nullable=True)
     othernames = Column(String(100), nullable=True)
     sex = Column(String(1), nullable=True)
+    medical_attention = Column(Enum(MedicalAttention), default=MedicalAttention.NO)
     program = Column(String(100), nullable=True)
     program_code = Column(String(45), nullable=True)
     dpt = Column(String(191), nullable=True)

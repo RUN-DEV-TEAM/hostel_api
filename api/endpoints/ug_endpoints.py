@@ -16,7 +16,7 @@ async def allocate_room_to_student_in_session_func(mat_no:str, session: async_se
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
-    return JSONResponse(status_code=404, content={}) 
+    return JSONResponse(status_code=404, content={"message":"Service is currently not available"}) 
     return res[1] #JSONResponse(status_code=200, content={}) 
 
 

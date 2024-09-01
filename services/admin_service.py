@@ -180,6 +180,8 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        total_male_allocated_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[5] in query_resp4])
        total_male_allocated_normal_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL' and row[5] in query_resp4])
        total_male_allocated_corner_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER' and row[5] in query_resp4])
+       print("##########################")
+       print(len(query_resp4))
    except:
        return False,{"Message":"Error fetching or summing blocks/rooms statistics"}
    else:

@@ -28,6 +28,7 @@ def require_permission(required_role: UserType):
     return permission_dependency
 
 
+
 async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_sessionmaker = Depends(get_session)):
     email = ''
     credential_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,

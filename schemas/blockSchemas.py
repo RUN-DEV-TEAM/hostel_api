@@ -132,6 +132,9 @@ class GetRoomStat(BaseModel):
     total_male_available_corner_room_in_session: int = 0
 
 
+class RoomSpaceStat(BaseModel):
+    room_stat : dict = {}
+    space_stat : dict = {}
 
 
 class ListAllBlockSchemeResponse(BaseModel):

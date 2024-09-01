@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Depends, Body, Query, HTTPException
 from typing import List
 from schemas.userSchema import CreateUser,ReturnSignUpUser,ListUser
-from schemas.blockSchemas import BlockSchema,BlockRoomSchema,GetRoomStat,BlockSchemaCreate,BlockSchemaCreateResponse
+from schemas.blockSchemas import BlockSchema,BlockRoomSchema,RoomSpaceStat,BlockSchemaCreate,BlockSchemaCreateResponse
 from schemas.helperSchema import Gender,RoomCondition,UserType
 from dependencies import get_session
 from services import admin_service
@@ -50,7 +50,7 @@ async def list_all_available_blocks_given_gender_func(gender:Gender, session: as
     return res[1]
 
 
-@router.get("/get_rooms_stat", response_model=GetRoomStat)
+@router.get("/get_rooms_stat", response_model=RoomSpaceStat)
 async def get_rooms_stat(session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_rooms_stat_service(session)
   if not res[0]:

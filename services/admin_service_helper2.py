@@ -113,7 +113,6 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sess
         _allo_room = StudentModel(room_id=room_obj['id'],**stud_obj)
         session.add(_allo_room)
         await incre_update_room_status_given_room_id(room_obj, session)
-        await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(room_obj['block_id'],room_obj['num_rooms_in_block'],room_obj['num_of_allocated_rooms'],session)
         await session.commit()
         await session.refresh(_allo_room)
         room_dict = admin_service_helper1.build_response_dict(_allo_room,RoomAllocationResponseSchema)
@@ -163,6 +162,8 @@ async def incre_update_room_status_given_room_id(room_obj:dict, session:async_se
     if (int(select_room_res.capacity) - int(select_room_res.num_space_occupied)) == 1:
         select_room_res.num_space_occupied = select_room_res.num_space_occupied+1
         select_room_res.room_status = 'OCCUPIED'
+        await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(room_obj['block_id'],room_obj['num_rooms_in_block'],room_obj['num_of_allocated_rooms'],session)
+
     else:
         select_room_res.num_space_occupied = select_room_res.num_space_occupied+1
     
@@ -171,6 +172,8 @@ async def decre_update_room_status_given_room_id(room_id:int,space_id:int, sessi
     try:
         select_room_q = await session.execute(select(RoomModel).where(RoomModel.id == room_id).with_for_update())
         select_room_res = select_room_q.scalar_one()
+        if select_room_res.room_status.value == "OCCUPIED":
+            await decre_update_block_record_given_block_id(select_room_res.block_id,session)
         if select_room_res.num_space_occupied > 0:
             select_room_res.num_space_occupied = select_room_res.num_space_occupied-1
             select_room_res.room_status = 'AVAILABLE'

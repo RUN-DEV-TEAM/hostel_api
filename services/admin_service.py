@@ -370,7 +370,6 @@ async def delete_student_from_room_in_session_service(mat_no:str,session_id:str,
      stud_obj = {"matric_number":mat_no, "curr_session":session_id}
      stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
      if stud_room[0]:
-         await admin_service_helper2.decre_update_block_record_given_block_id(stud_room[1]['room_details']['block_id'],session)
          res = await admin_service_helper2.decre_update_room_status_given_room_id(stud_room[1]['room_details']['id'],stud_room[1]['id'],session)
          await session.commit()
          return True,res[1]

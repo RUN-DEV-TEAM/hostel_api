@@ -1,11 +1,12 @@
 from datetime import datetime
-from sqlalchemy import func,update, and_,delete
+from sqlalchemy import func,update, and_,delete, or_
 from models.userModel import RoomModel,StudentModel,BlockModel,BlockProximityToFacultyModel
 from schemas.roomSchema import RoomSchemaDetailed,RoomAllocationResponseSchema,RoomSchemaDetailedResponse
 from schemas.helperSchema import Gender
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.future import select
 from services import admin_service_helper1
+
 
 
 
@@ -249,8 +250,13 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
                                             .where(RoomModel.room_status == "AVAILABLE")
                                             .where(BlockModel.block_status == "AVAILABLE")
                                             .where(BlockModel.gender == stud_obj['sex'])
-                                            .where(BlockModel.proxy_to_portals_lodge == 'YES')
-                                            .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == stud_obj['college_id'])))
+                                            .where(
+                                                or_( BlockModel.proxy_to_portals_lodge == 'YES',
+                                                    BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id
+                                                                            ).where(BlockProximityToFacultyModel.faculty == stud_obj['college_id']))
+                                                    )
+                                                
+                                                )
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))

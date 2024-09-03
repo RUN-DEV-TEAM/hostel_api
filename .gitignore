@@ -1,3 +1,4 @@
 /_venv
 .env
+/db
 requirements.txt

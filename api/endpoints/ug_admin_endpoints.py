@@ -81,7 +81,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
     return res[1]
 
 
-# param: matric number
+
 @router.post("/random_assign_room_to_student_in_session")
 async def random_assign_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
   res = await admin_service.get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no,session)

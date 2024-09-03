@@ -154,7 +154,7 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        # space stat
        query3 = await session.execute(select(RoomModel.capacity,BlockModel.num_norm_rooms_in_block,
                                              BlockModel.num_corn_rooms_in_block,BlockModel.gender , 
-                                             RoomModel.room_type, RoomModel.id)
+                                             RoomModel.room_type, RoomModel.id, RoomModel.num_space_occupied)
                                              .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                       .where(BlockModel.deleted == 'N'))
        query_resp3 = query3.all()
@@ -168,21 +168,20 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        query4 = await session.execute(select(StudentModel.room_id)
                                       .where(StudentModel.curr_session == external_services.get_current_academic_session()[1]))
        query_resp4 = query4.scalars().all()
-       total_female_unallocated_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[5] not in query_resp4])
-       total_female_unallocated_normal_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[5] not in query_resp4])
-       total_female_unallocated_corner_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[5] not in query_resp4])
-       total_female_allocated_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[5] in query_resp4])
-       total_female_allocated_normal_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[5] in query_resp4])
-       total_female_allocated_corner_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[5] in query_resp4])
-       total_male_unallocated_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[5] not in query_resp4])
-       total_male_unallocated_normal_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL' and row[5] not in query_resp4])
-       total_male_unallocated_corner_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER' and row[5] not in query_resp4])
-       total_male_allocated_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[5] in query_resp4])
-       total_male_allocated_normal_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL' and row[5] in query_resp4])
-       total_male_allocated_corner_space_in_session = sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER' and row[5] in query_resp4])
-       print("##########################")
-       print(len(query_resp4))
-       print("FUN",total_female_unallocated_space_in_session)
+       total_female_allocated_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F'])
+       total_female_allocated_normal_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL'])
+       total_female_allocated_corner_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' ])
+       total_female_unallocated_space_in_session = int(total_female_space_in_session) - int(total_female_allocated_space_in_session)
+       total_female_unallocated_normal_space_in_session = int(total_female_normal_space_in_session)  - int(total_female_allocated_normal_space_in_session)
+       total_female_unallocated_corner_space_in_session = int(total_female_corner_space_in_session)  - int(total_female_allocated_corner_space_in_session)
+
+       total_male_allocated_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'M'])
+       total_male_allocated_normal_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL'])
+       total_male_allocated_corner_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER' ])
+       total_male_unallocated_space_in_session = int(total_male_space_in_session) - int(total_male_allocated_space_in_session)
+       total_male_unallocated_normal_space_in_session =  int(total_male_normal_space_in_session) - int(total_male_allocated_normal_space_in_session)
+       total_male_unallocated_corner_space_in_session = int(total_male_corner_space_in_session) - int(total_male_allocated_corner_space_in_session)
+
    except:
        return False,{"Message":"Error fetching or summing blocks/rooms statistics"}
    else:
@@ -300,7 +299,9 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
 
     get_room_condition = {'room_cat':'GENERAL'}
-    if int(stud_obj['exemption_id']) >0:         
+    if int(stud_obj['exemption_id']) >0:
+        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
+            get_room_condition['room_cat'] = 'SPECIAL'          
         res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
         if res[0]:
             return True, res[1]
@@ -312,8 +313,7 @@ async def first_condition_before_ramdom_room_allocation(stud_obj,session):
             return False, {"message": f"#{stud_obj['accom_payable']}  is the amount payable for accommodation but you have just paid #{int(stud_obj['accom_paid'])}"}
     elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :  
         if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
-            get_room_condition['room_cat'] = 'SPECIAL'
-            print(stud_obj)         
+            get_room_condition['room_cat'] = 'SPECIAL'       
             res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
             if res[0]:
                 return True, res[1]
@@ -365,7 +365,7 @@ async def get_student_room_in_session_service(mat_no:str,session_id:str, session
     else:
         return True,stud_room[1]
 
-
+# num_space_occupied
 async def delete_student_from_room_in_session_service(mat_no:str,session_id:str, session:async_sessionmaker):
      stud_obj = {"matric_number":mat_no, "curr_session":session_id}
      stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)

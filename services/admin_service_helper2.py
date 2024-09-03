@@ -70,7 +70,7 @@ async def get_random_available_room(stud_obj:dict,get_room_condition:dict, sessi
 
 
 async def get_specific_available_room_in_block(gender:Gender,curr_session:str, block_id:int,session:async_sessionmaker):
-    get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+    get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity ,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                         .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                         .where(RoomModel.room_status == "AVAILABLE")
@@ -89,7 +89,7 @@ async def get_specific_available_room_in_block(gender:Gender,curr_session:str, b
 
 
 async def get_specific_available_space_in_room(in_data:dict, room_id:int,session:async_sessionmaker):
-    get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+    get_room = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity ,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                         .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                         .where(RoomModel.room_status == "AVAILABLE")
@@ -111,10 +111,7 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sess
     try:
         _allo_room = StudentModel(room_id=room_obj['id'],**stud_obj)
         session.add(_allo_room)
-        no_stud_in_room = await get_number_of_occupant_in_room(room_obj['id'],session)
-        if no_stud_in_room[0]:
-            if room_obj['capacity'] == no_stud_in_room[1]:
-                await incre_update_room_status_given_room_id(room_obj['id'], session)
+        await incre_update_room_status_given_room_id(room_obj, session)
         await incre_update_block_record_given_block_id_and_num_of_allocated_rooms(room_obj['block_id'],room_obj['num_rooms_in_block'],room_obj['num_of_allocated_rooms'],session)
         await session.commit()
         await session.refresh(_allo_room)
@@ -131,7 +128,7 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sess
 
 
 async def get_room_details_given_student_room_id(room_id:int, session:async_sessionmaker):
-        room_details = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.description,
+        room_details = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.description,
                                                     BlockModel.num_rooms_in_block,BlockModel.num_of_allocated_rooms,BlockModel.gender,
                                                 RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
                                        )
@@ -158,15 +155,26 @@ async def get_number_of_occupant_in_room(room_id:int, session:async_sessionmaker
 
 
 
-async def incre_update_room_status_given_room_id(room_id:int, session:async_sessionmaker):
-    await session.execute(update(RoomModel).where(RoomModel.id == room_id).values(room_status="OCCUPIED")
-                                 .execution_options(synchronize_session="fetch"))
+async def incre_update_room_status_given_room_id(room_obj:dict, session:async_sessionmaker):
 
+    select_room_q = await session.execute(select(RoomModel).where(RoomModel.id == int(room_obj['id'])).with_for_update())
+    select_room_res = select_room_q.scalar_one()
+    if (int(select_room_res.capacity) - int(select_room_res.num_space_occupied)) == 1:
+        select_room_res.num_space_occupied = select_room_res.num_space_occupied+1
+        select_room_res.room_status = 'OCCUPIED'
+    else:
+        select_room_res.num_space_occupied = select_room_res.num_space_occupied+1
+    
 
 async def decre_update_room_status_given_room_id(room_id:int,space_id:int, session:async_sessionmaker):
     try:
-        await session.execute(update(RoomModel).where(RoomModel.id == room_id).values(room_status="AVAILABLE")
-                                 .execution_options(synchronize_session="fetch"))
+        select_room_q = await session.execute(select(RoomModel).where(RoomModel.id == room_id).with_for_update())
+        select_room_res = select_room_q.scalar_one()
+        if select_room_res.num_space_occupied > 0:
+            select_room_res.num_space_occupied = select_room_res.num_space_occupied-1
+            select_room_res.room_status = 'AVAILABLE'
+        else:
+            return False, {"message":f"Non of the rooms in the block {select_room_res.room_name} was allocated to student before"}
         await session.execute(delete(StudentModel).where(StudentModel.id == space_id))
     except:
         return False,{"message":"Error removing student from room"}
@@ -176,14 +184,13 @@ async def decre_update_room_status_given_room_id(room_id:int,space_id:int, sessi
 
 
 async def incre_update_block_record_given_block_id_and_num_of_allocated_rooms(block_id:int,num_rooms_in_block:int, num_of_allocated_rooms:int,session:async_sessionmaker):
-    if (num_rooms_in_block - num_of_allocated_rooms) == 1:
-        await session.execute(update(BlockModel).where(BlockModel.id == block_id)
-                              .values(block_status="OCCUPIED", num_of_allocated_rooms= num_of_allocated_rooms+1)
-                                 .execution_options(synchronize_session="fetch"))
+    select_block = await session.execute(select(BlockModel).where(BlockModel.id == block_id).with_for_update())
+    select_block = select_block.scalar_one()    
+    if (int(select_block.num_rooms_in_block )- int(select_block.num_of_allocated_rooms)) == 1:
+        select_block.num_of_allocated_rooms = select_block.num_of_allocated_rooms+1
+        select_block.block_status = "OCCUPIED"
     else:
-        await session.execute(update(BlockModel).where(BlockModel.id == block_id)
-                              .values(num_of_allocated_rooms= num_of_allocated_rooms+1)
-                                 .execution_options(synchronize_session="fetch"))
+        select_block.num_of_allocated_rooms = select_block.num_of_allocated_rooms+1
 
 
 async def decre_update_block_record_given_block_id(block_id:int, session:async_sessionmaker):
@@ -196,14 +203,14 @@ async def decre_update_block_record_given_block_id(block_id:int, session:async_s
         else:
             return False, {"message":f"Non of the rooms in the block {select_block.block_name} was allocated to student before"}
     except:
-        return False,{"message":"Error executing Function decre_update_room_status_given_room_id "}
+        return False,{"message":"Error executing Function decre_update_block_status_given_room_id "}
     else:
-        return True, {"message":"Function decre_update_room_status_given_room_id successfully executed"}
+        return True, {"message":"Function decre_update_block_status_given_room_id successfully executed"}
    
    
 
 async def default_query_db_for_random_available_room(stud_obj,session:async_sessionmaker):
-  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")
@@ -219,7 +226,7 @@ async def default_query_db_for_random_available_room(stud_obj,session:async_sess
 
 
 async def query_db_for_random_available_room(stud_obj,session:async_sessionmaker):
-  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")
@@ -236,7 +243,7 @@ async def query_db_for_random_available_room(stud_obj,session:async_sessionmaker
 
 
 async def query_db_for_random_available_room_for_health_challenge_students(stud_obj,session:async_sessionmaker):
-  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")
@@ -249,7 +256,7 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
                                             .limit(1))
   room = res.fetchone()
   if not room:
-      res2 =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+      res2 =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id).where(RoomModel.room_status == "AVAILABLE")
                                             .where(BlockModel.block_status == "AVAILABLE").where(BlockModel.gender == stud_obj['sex'])
@@ -264,7 +271,7 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
 
 
 async def query_db_for_random_available_room_with_faculty_proximity_condition(stud_obj,session:async_sessionmaker):
-  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")
@@ -283,7 +290,7 @@ async def query_db_for_random_available_room_with_faculty_proximity_condition(st
 
 
 async def  query_db_for_random_room_in_quest_house(stud_obj, session):
-    res = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,BlockModel.block_name,BlockModel.num_rooms_in_block,
+    res = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")

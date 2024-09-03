@@ -8,6 +8,7 @@ Base = declarative_base()
 from models import *
 
 
+# engine = create_async_engine("mysql+aiomysql://runedu_accommodatedb:Mrsirl_&&!_123@162.214.155.50:3306/runedu_accommodation", echo=True)
 engine = create_async_engine(os.getenv("DATABASE_URL"), echo=True)
 async_session = async_sessionmaker(engine, expire_on_commit=False )
 

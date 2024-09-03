@@ -10,6 +10,7 @@ class RoomSchemaWithOutBlockName(BaseModel):
     id : int
     room_name : str
     capacity : str 
+    num_space_occupied : str
     room_type: str
     block_id : int 
     room_status : str
@@ -88,7 +89,8 @@ class RoomAllocationResponseSchema(BaseModel):
 class RoomSchemaDetailedResponse(BaseModel):
     id : int
     room_name : str
-    capacity : str 
+    capacity : int 
+    num_space_occupied: int
     room_type: str
     block_id : int 
     block_name : str

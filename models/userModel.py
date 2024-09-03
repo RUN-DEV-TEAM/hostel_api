@@ -61,6 +61,7 @@ class RoomModel(Base):
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     room_name = Column(String(45), nullable=False)
     capacity = Column(Integer, nullable=False)
+    num_space_occupied = Column(Integer, default=0)
     room_type = Column(Enum(RoomType), default=RoomType.NORMAL)
     block_id = Column(Integer, ForeignKey('t_blocks.id'), nullable=False)
     room_status = Column(Enum(RoomStatus), default=RoomStatus.AVAILABLE)

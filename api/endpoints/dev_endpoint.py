@@ -28,3 +28,23 @@ async def test_queries(session: async_sessionmaker = Depends(get_session)):
     
     
     return {"message":"Testing"}
+
+
+
+
+# create block data 
+
+# {
+#  "block_name": "block 2", 
+#   "description": "Bachelor Degree", 
+#   "gender":"M", 
+#   "num_rooms_in_block": 36, 
+#   "norm_room_capacity": 3,
+#   "corn_room_capacity": 6,
+#   "num_corn_rooms_in_block": 2, 
+#   "corner_rooms": [{"value": "4", "label": "BASIC MEDICAL SCIENCES"},{"value": "7", "label": "BASIC MEDICAL SCIENCES"}], 
+#   "block_access_to_fac" : [{"value": "4", "label": "BASIC MEDICAL SCIENCES"},{"value": "7", "label": "BASIC MEDICAL SCIENCES"}],
+#   "access_to_lodge": true,
+#   "airy": true, 
+#   "water": false
+# }

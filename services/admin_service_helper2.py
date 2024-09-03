@@ -32,7 +32,7 @@ async def backup_room_getter(stud_obj,health_block_counter, session):
     if room_res[0]:
         return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
     else:
-        room_res = await query_db_for_random_available_room(stud_obj,session)
+        room_res = await default_query_db_for_random_available_room(stud_obj,session)
         if room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
         else:

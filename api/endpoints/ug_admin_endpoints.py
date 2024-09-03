@@ -234,7 +234,7 @@ def list_all_colleges_func( ):
 
 
 
-
+# About the student's health records
 
     # $students =   DB::table('t_students')->select('matric_number',
   #           DB::raw("CONCAT(t_students.surname,' ',t_students.firstname,' ',t_students.othernames) as full_name"),

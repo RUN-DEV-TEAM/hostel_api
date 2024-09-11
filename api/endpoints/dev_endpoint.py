@@ -33,7 +33,6 @@ async def test_queries(session: async_sessionmaker = Depends(get_session)):
     return {"message":"Testing"}
 
 
-
 # create block data 
 
 blocks_6000 = [

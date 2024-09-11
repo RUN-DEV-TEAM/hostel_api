@@ -428,6 +428,23 @@ async def  update_room_condition_in_session_service(room_id:int,room_condition:R
 
 
 
+async def list_rooms_with_occupant_in_session_service(block_id:int, session:async_sessionmaker):
+   try:
+       result = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,
+                                       RoomModel.room_type, RoomModel.block_id,BlockModel.block_name,RoomModel.room_status,RoomModel.room_condition   
+                                       )
+                                       .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                       .where(RoomModel.block_id == block_id,RoomModel.num_space_occupied >= 1,
+                                             RoomModel.deleted == 'N'))
+       room_list = result.all()
+       resp = [admin_service_helper1.build_response_dict(room,RoomSchema)  for room in room_list]
+   except:
+       return False, {"message":f"Error fetching all  rooms with occupants in block given block ID {block_id}"}
+   else:
+       return True,resp
+
+
+
 async def list_rooms_with_empty_space_in_session_service(gender:Gender,page,page_size, session:async_sessionmaker):
     try:
         # query = await session.execute(select(distinct(StudentModel.room_id)).where(StudentModel.acad_session==session_id))

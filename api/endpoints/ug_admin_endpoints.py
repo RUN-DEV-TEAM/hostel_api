@@ -70,6 +70,16 @@ async def get_all_available_rooms_from_selected_block(block_id:int, session: asy
     return res[1]
 
 
+@router.get("/list_rooms_with_occupant_in_session", response_model='')
+async def list_rooms_with_occupant_in_session_func(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
+  res = await admin_service.list_rooms_with_occupant_in_session_service(block_id,session)
+  if not res[0]:
+    return JSONResponse(status_code=404, content=res[1])  
+  elif res[0]:
+    return res[1]
+
+
+
 # 
 
 @router.get("/get_all_occupied_rooms_from_selected_block", response_model='')
@@ -174,6 +184,7 @@ async def list_rooms_with_empty_space_in_session_func(gender:Gender, page: int =
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:
     return res[1]
+
 
 @router.get("/list_occupied_rooms_in_session")
 async def list_occupied_rooms_in_session_func(gender:Gender, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):

@@ -314,9 +314,4 @@ async def  query_db_for_random_room_in_quest_house(stud_obj, session):
       return False, {"message":f"Is like no available room in quest house in {stud_obj['curr_session']} academic session"}
     return True, room
 
-    #  matric_number = Column(String(65), nullable=False)
-    # room_id = Column(Integer, ForeignKey('t_rooms.id'), nullable=False)
-    # acad_session = Column(String(9), nullable=False)
-    # deleted = Column(Enum(Deleted), default=Deleted.N)
-    # created_at = Column(DateTime, server_default= text('CURRENT_TIMESTAMP'))
-    # updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+ 

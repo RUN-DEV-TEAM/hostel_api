@@ -59,8 +59,6 @@ async def get_rooms_stat(session: async_sessionmaker = Depends(get_session), use
     return res[1]
   
 
-
-
 @router.get("/get_all_available_rooms_from_selected_block", response_model='')
 async def get_all_available_rooms_from_selected_block(block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_all_available_rooms_from_selected_block_service(block_id,session)

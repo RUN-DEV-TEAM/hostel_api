@@ -128,7 +128,7 @@ async def create_new_block_db_service(input:BlockSchemaCreate, session:async_ses
 
 
 async def get_rooms_stat_service(session:async_sessionmaker):
-#    try:   
+   try:   
        query1 = await session.execute(select(RoomModel.room_type, BlockModel.gender,RoomModel.capacity)
                                                 .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                                 .where(RoomModel.room_status == "AVAILABLE")
@@ -141,7 +141,6 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        total_male_available_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M'])
        total_male_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'CORNER'])
        total_male_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'NORMAL'])
-    
        query2 = await session.execute(select(BlockModel.num_norm_rooms_in_block,BlockModel.num_corn_rooms_in_block,
                                       BlockModel.gender ).where(BlockModel.deleted == 'N'))
        query_resp2 = query2.all()
@@ -162,7 +161,6 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        total_female_normal_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[7] != 77])
        total_female_corner_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[7] != 77])
        total_female_special_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[7] == 77])
-
        total_male_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'M'])
        total_male_normal_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL'])
        total_male_corner_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER'])
@@ -174,22 +172,19 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        total_female_allocated_normal_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[7] != 77])
        total_female_allocated_corner_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[7] != 77 ])
        total_female_allocated_special_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[7] == 77 ])
-
        total_female_unallocated_space_in_session = int(total_female_space_in_session) - int(total_female_allocated_space_in_session)
        total_female_unallocated_normal_space_in_session = int(total_female_normal_space_in_session)  - int(total_female_allocated_normal_space_in_session)
        total_female_unallocated_corner_space_in_session = int(total_female_corner_space_in_session)  - int(total_female_allocated_corner_space_in_session)
        total_female_unallocated_special_space_in_session = int(total_female_special_space_in_session)  - int(total_female_allocated_special_space_in_session)
-  
        total_male_allocated_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'M'])
        total_male_allocated_normal_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL'])
        total_male_allocated_corner_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER' ])
        total_male_unallocated_space_in_session = int(total_male_space_in_session) - int(total_male_allocated_space_in_session)
        total_male_unallocated_normal_space_in_session =  int(total_male_normal_space_in_session) - int(total_male_allocated_normal_space_in_session)
        total_male_unallocated_corner_space_in_session = int(total_male_corner_space_in_session) - int(total_male_allocated_corner_space_in_session)
-
-#    except:
-#        return False,{"Message":"Error fetching or summing blocks/rooms statistics"}
-#    else:
+   except:
+       return False,{"Message":"Error fetching or summing blocks/rooms statistics"}
+   else:
        return True,{ 
                         "room_stat": {'total_female_rooms_in_session': total_female_rooms_in_session,
                                 'total_female_normal_room_in_session':total_female_normal_room_in_session,'total_female_corner_room_in_session':total_female_corner_room_in_session,
@@ -212,7 +207,6 @@ async def get_rooms_stat_service(session:async_sessionmaker):
                                        "total_male_unallocated_corner_space_in_session":total_male_unallocated_corner_space_in_session,"total_male_allocated_space_in_session":total_male_allocated_space_in_session,
                                        "total_male_allocated_normal_space_in_session":total_male_allocated_normal_space_in_session,"total_male_allocated_corner_space_in_session":total_male_allocated_corner_space_in_session}
                      }
-
 
 
 async def get_all_available_rooms_from_selected_block_service(block_id:int, session:async_sessionmaker):

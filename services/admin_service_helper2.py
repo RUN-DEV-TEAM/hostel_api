@@ -48,8 +48,7 @@ async def backup_room_getter(stud_obj,health_block_counter, session):
 
 
 async def get_random_available_room(stud_obj:dict,get_room_condition:dict, session:async_sessionmaker):
-    
-    health_block_counter = 61 #this will be from DB
+    health_block_counter = await get_percentage_of_allocation_in_health_blocks(session) #this will be from DB
     if stud_obj['medical_attention'] == 'YES' and health_block_counter <= 60 and get_room_condition['room_cat'] == "GENERAL":
         room_res = await query_db_for_random_available_room_for_health_challenge_students(stud_obj, session)
         if room_res[0]:
@@ -315,3 +314,19 @@ async def  query_db_for_random_room_in_quest_house(stud_obj, session):
     return True, room
 
  
+async def get_percentage_of_allocation_in_health_blocks(session):
+    query = await session.execute(select(func.count(StudentModel.id))
+                                            .where(
+                                                StudentModel.room_id.in_(select(RoomModel.id).where(
+                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
+                                                          or_( BlockModel.airy == 'YES',
+                                                                BlockModel.water_access == 'YES',
+                                                                BlockModel.proxy_to_portals_lodge == 'YES'
+                                                            )
+                                                    ))
+                                                ))
+                                            ).where(StudentModel.medical_attention == 'YES')
+                                            )
+    query_res = query.scalar_one()
+    return 60
+                                    

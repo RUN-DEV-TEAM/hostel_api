@@ -29,7 +29,7 @@ async def get_student_room_in_session_func(mat_no:str, session_id:str, session: 
   
 
 
-@router.post("/get_available_space_from_guest_house",response_model="")
+@router.get("/get_available_space_from_guest_house",response_model="")
 async def get_available_space_from_guest_house_func(session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
   res = await admin_service.get_available_space_from_guest_house_service(session)
   if not res[0]:

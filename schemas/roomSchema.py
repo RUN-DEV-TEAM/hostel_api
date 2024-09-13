@@ -6,6 +6,14 @@ from typing import List
 
 
 
+class UpdateRoomSchema(BaseModel):
+    id : int
+    room_name : str
+    capacity : str 
+    room_type: str
+    room_status : str
+    room_condition : str
+
 class RoomSchemaWithOutBlockName(BaseModel):
     id : int
     room_name : str

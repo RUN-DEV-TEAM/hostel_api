@@ -5,7 +5,7 @@ from sqlalchemy import func,distinct
 from models.userModel import UserModel,BlockModel,RoomModel,StudentModel,BlockProximityToFacultyModel
 from schemas.userSchema import CreateUser,ListUser,ReturnSignUpUser,ListUser2
 from schemas.blockSchemas import BlockSchema,GetRoomStat,BlockRoomSchema2,BlockSchemaCreate,BlockRoomSchema,BlockProxityResponse,ListAllBlockSchemeResponse
-from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema,RoomSchemaWithOutBlockName
+from schemas.roomSchema import RoomSchema,RoomSchemaDetailed,RoomStatusSchema,RoomSchemaWithOutBlockName,UpdateRoomSchema
 from schemas.studentSchema import ListStudentInRoomSchema,StudentInBlockchema,ListAllOccupantSchemaResponse
 from schemas.helperSchema import Gender,RoomCondition
 from services import admin_service_helper1
@@ -414,19 +414,23 @@ async def get_room_status_in_session_service(room_id:int, session:async_sessionm
         return False, {"message":f"Error querying room with id {room_id}"}
     
 
-async def  update_room_condition_in_session_service(room_id:int,room_condition:RoomCondition, session:async_sessionmaker):
+async def  update_room_in_session_service(update_data:UpdateRoomSchema, session:async_sessionmaker):
    try:
-        query = await session.execute(select(RoomModel).where(RoomModel.id == room_id))
+        update_data = update_data.model_dump()
+        query = await session.execute(select(RoomModel).where(RoomModel.id == update_data['id']))
         query_res = query.scalar_one()
         if query_res:
-            query_res.room_condition = room_condition
+            query_res.room_condition = update_data['room_condition']
+            query_res.capacity = update_data['capacity']
+            query_res.room_type = update_data['room_type']
+            query_res.room_status = update_data['room_status']
             await session.commit()
             return True, {"message":"Room condition successfully updated"}
         else:
-            return False, {"message":f"No room with id {room_id} is available for update"}
+            return False, {"message":f"No room with id {update_data['id']} is available for update"}
 
    except:
-       return False, {"message":f"Error updating room condition with id {room_id}"}
+       return False, {"message":f"Error updating room condition with id {update_data['id']}"}
 
 
 

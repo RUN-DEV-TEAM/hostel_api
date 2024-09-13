@@ -1,8 +1,9 @@
 from fastapi import APIRouter,Depends, Body, Query, HTTPException
 from typing import List
 from schemas.userSchema import CreateUser,ReturnSignUpUser,ListUser
+from schemas.roomSchema import UpdateRoomSchema
 from schemas.blockSchemas import BlockSchema,BlockRoomSchema,RoomSpaceStat,BlockSchemaCreate,BlockSchemaCreateResponse
-from schemas.helperSchema import Gender,RoomCondition,UserType
+from schemas.helperSchema import Gender,UserType
 from dependencies import get_session
 from services import admin_service
 from api.endpoints.endpoint_helper import  get_current_user,require_permission
@@ -130,7 +131,7 @@ async def get_student_room_in_session_func(mat_no:str,session_id:str, session: a
     return res[1]
 
 
-# param: matric number
+
 @router.delete("/delete_student_from_room_in_session",description="Just a soft delete")
 async def delete_student_from_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
   res = await admin_service.delete_student_from_room_in_session_service(mat_no, session_id, session)
@@ -139,6 +140,7 @@ async def delete_student_from_room_in_session_func(mat_no:str,session_id:str, se
   elif res[0]:
     return res[1]
   
+
 
 @router.get("/list_students_in_room_in_session")
 async def list_student_in_room_in_session_func(room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
@@ -158,9 +160,9 @@ async def get_room_status_in_session_func(room_id:int, session: async_sessionmak
     return res[1]
 
 
-@router.put("/update_room_condition_in_session")
-async def update_room_condition_in_session_func(room_id:int, room_condition:RoomCondition, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
-  res = await admin_service.update_room_condition_in_session_service(room_id,room_condition, session)
+@router.put("/update_room_in_session")
+async def update_room_in_session_func(update_data:UpdateRoomSchema, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+  res = await admin_service.update_room_in_session_service(update_data, session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:

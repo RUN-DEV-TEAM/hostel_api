@@ -28,7 +28,7 @@ def get_current_academic_session():
         else:
             return False, {"message": "Can't get current session"}
     except:
-        return False, {"message" : "Error get current session"}
+        return False,{"message" : "Error get current session"}
     
 
 

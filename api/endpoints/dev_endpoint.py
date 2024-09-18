@@ -16,29 +16,48 @@ import asyncio
 router = APIRouter()
 
 
+
+# ==: Equal to
+# !=: Not equal to
+# <: Less than
+# <=: Less than or equal to
+# >: Greater than
+# >=: Greater than or equal to
+# in_: In a list of values
+# not_in_: Not in a list of values
+
 @router.get("/test_queries_2")
 async def test_queries_2(session: async_sessionmaker = Depends(get_session)):
-    query = await session.execute(select(func.count(StudentModel.id))
-                                            .where(
-                                                StudentModel.room_id.in_(select(RoomModel.id).where(
-                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
-                                                          or_( BlockModel.airy == 'YES',
-                                                                BlockModel.water_access == 'YES',
-                                                                BlockModel.proxy_to_portals_lodge == 'YES'
-                                                            )
-                                                    ))
-                                                ))
-                                            ).where(StudentModel.medical_attention == 'YES')
-                                            )
-    query_res = query.scalar_one()
+    # query = await session.execute(select(func.count(StudentModel.id))
+    #                                         .where(
+    #                                             StudentModel.room_id.in_(select(RoomModel.id).where(
+    #                                                 RoomModel.block_id.in_(select(BlockModel.id).where(
+    #                                                       or_( BlockModel.airy == 'YES',
+    #                                                             BlockModel.water_access == 'YES',
+    #                                                             BlockModel.proxy_to_portals_lodge == 'YES'
+    #                                                         )
+    #                                                 ))
+    #                                             ))
+    #                                         ).where(StudentModel.medical_attention == 'YES')
+    #                                         )
+    # query_res = query.scalar_one()
 
-    query2 = await session.execute(select(func.sum(RoomModel.capacity), func.sum(RoomModel.num_space_occupied))
-                                            .join(BlockModel, RoomModel.block_id == BlockModel.id)
-                                            .where(BlockModel.id == 77)
-                                            .where(BlockModel.gender == "F")
-                                            .with_for_update())
-    used_capacity = query2.fetchone()
-    return {"message":"Testing"}
+    # query2 = await session.execute(select(func.sum(RoomModel.capacity), func.sum(RoomModel.num_space_occupied))
+    #                                         .join(BlockModel, RoomModel.block_id == BlockModel.id)
+    #                                         .where(BlockModel.id == 77)
+    #                                         .where(BlockModel.gender == "F")
+    #                                         .with_for_update())
+    # used_capacity = query2.fetchone()
+    query_f = await session.execute(select(func.count(StudentModel.id))
+                                            .where( StudentModel.room_id.in_(select(RoomModel.id).where(
+                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
+                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
+                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
+                                                ).where(RoomModel.block_id.in_([55,56]))) ).where(StudentModel.medical_attention == 'YES'))
+    query_res = query_f.scalar_one()
+    print("####################11111111")
+    print(query_res)
+    return {"message":"Testing2"}
 
 
 # , user: ReturnSignUpUser =Depends(get_current_user)

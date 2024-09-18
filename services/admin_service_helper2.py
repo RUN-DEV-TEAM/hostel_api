@@ -36,7 +36,7 @@ async def backup_room_getter(stud_obj,health_block_counter, session):
         if room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
         else:
-            if health_block_counter > 60:
+            if health_block_counter:
                 room_res = await query_db_for_random_available_room_for_health_challenge_students(stud_obj, session)
                 if room_res[0]:
                     return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
@@ -48,8 +48,8 @@ async def backup_room_getter(stud_obj,health_block_counter, session):
 
 
 async def get_random_available_room(stud_obj:dict,get_room_condition:dict, session:async_sessionmaker):
-    health_block_counter = await get_percentage_of_allocation_in_health_blocks(session) #this will be from DB
-    if stud_obj['medical_attention'] == 'YES' and health_block_counter <= 60 and get_room_condition['room_cat'] == "GENERAL":
+    health_block_counter = await get_percentage_of_allocation_in_health_blocks(stud_obj['sex'],session) #this will be from DB
+    if stud_obj['medical_attention'] == 'YES' and health_block_counter and get_room_condition['room_cat'] == "GENERAL":
         room_res = await query_db_for_random_available_room_for_health_challenge_students(stud_obj, session)
         if room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
@@ -219,6 +219,7 @@ async def default_query_db_for_random_available_room(stud_obj,session:async_sess
                                             .where(RoomModel.room_status == "AVAILABLE")
                                             .where(BlockModel.block_status == "AVAILABLE")
                                             .where(BlockModel.gender == stud_obj['sex'])
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -236,6 +237,7 @@ async def query_db_for_random_available_room(stud_obj,session:async_sessionmaker
                                             .where(BlockModel.block_status == "AVAILABLE")
                                             .where(BlockModel.gender == stud_obj['sex'])
                                             .where(BlockModel.proxy_to_portals_lodge == 'NO')
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -259,6 +261,9 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
                                                     )
                                                 
                                                 )
+                                            .where(BlockModel.water_access == 'YES')
+                                            .where(BlockModel.airy == 'YES')
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -269,6 +274,9 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id).where(RoomModel.room_status == "AVAILABLE")
                                             .where(BlockModel.block_status == "AVAILABLE").where(BlockModel.gender == stud_obj['sex'])
                                             .where(BlockModel.proxy_to_portals_lodge == 'YES')
+                                            .where(BlockModel.water_access == 'YES')
+                                            .where(BlockModel.airy == 'YES')
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .with_for_update().order_by(func.random()).limit(1))
       alt_room = res2.fetchone()
       if not alt_room:
@@ -287,8 +295,13 @@ async def query_db_for_random_available_room_with_faculty_proximity_condition(st
                                             .where(BlockModel.gender == stud_obj['sex'])
                                             .where(BlockModel.proxy_to_portals_lodge == 'NO')
                                             .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == stud_obj['college_id'])))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .with_for_update()
-                                            .order_by(func.random())
+                                            .order_by(func.random()).where(
+                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
+                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
+                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
+                                                )
                                             .limit(1))
   room = res.fetchone()
   if not room:
@@ -303,7 +316,7 @@ async def  query_db_for_random_room_in_quest_house(stud_obj, session):
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                             .where(RoomModel.room_status == "AVAILABLE")
                                             .where(BlockModel.block_status == "AVAILABLE")
-                                            .where(BlockModel.id == 7)
+                                            .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .where(BlockModel.gender == "F")
                                             .with_for_update()
                                             .order_by(func.random())
@@ -314,19 +327,33 @@ async def  query_db_for_random_room_in_quest_house(stud_obj, session):
     return True, room
 
  
-async def get_percentage_of_allocation_in_health_blocks(session):
-    query = await session.execute(select(func.count(StudentModel.id))
-                                            .where(
-                                                StudentModel.room_id.in_(select(RoomModel.id).where(
+async def get_percentage_of_allocation_in_health_blocks(sex, session):
+    #160*0.6
+    #152*0.6
+    if sex == 'F':      
+        query_f = await session.execute(select(func.count(StudentModel.id))
+                                            .where( StudentModel.room_id.in_(select(RoomModel.id).where(
                                                     RoomModel.block_id.in_(select(BlockModel.id).where(
-                                                          or_( BlockModel.airy == 'YES',
-                                                                BlockModel.water_access == 'YES',
-                                                                BlockModel.proxy_to_portals_lodge == 'YES'
-                                                            )
-                                                    ))
-                                                ))
-                                            ).where(StudentModel.medical_attention == 'YES')
-                                            )
-    query_res = query.scalar_one()
-    return 60
+                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
+                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
+                                                ).where(RoomModel.block_id.in_([76,77]))) ).where(StudentModel.medical_attention == 'YES'))
+        query_res = query_f.scalar_one()
+        if query_res <= 96:
+            return True
+        else:
+            return False
+    elif sex == 'M':
+        query_m = await session.execute(select(func.count(StudentModel.id))
+                                            .where( StudentModel.room_id.in_(select(RoomModel.id).where(
+                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
+                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
+                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
+                                                ).where(RoomModel.block_id.in_([51,52]))) ).where(StudentModel.medical_attention == 'YES'))
+        query_res = query_m.scalar_one()
+        if query_res <= 92:
+            return True
+        else:
+            return False
+    return 0
                                     
+

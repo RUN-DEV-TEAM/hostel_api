@@ -129,27 +129,34 @@ async def create_new_block_db_service(input:BlockSchemaCreate, session:async_ses
 
 async def get_rooms_stat_service(session:async_sessionmaker):
    try:   
-       query1 = await session.execute(select(RoomModel.room_type, BlockModel.gender,RoomModel.capacity)
+       query1 = await session.execute(select(RoomModel.room_type, BlockModel.gender,RoomModel.capacity,RoomModel.block_id )
                                                 .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                                 .where(RoomModel.room_status == "AVAILABLE")
                                                 .where(BlockModel.block_status == "AVAILABLE")
                                                 .where(BlockModel.deleted == 'N'))
        query_resp1 = query1.all()
+       query_special_blocks = await session.execute(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14'))
+       res_query_special_blocks = query_special_blocks.scalars().all()    
+
        total_female_available_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F'])
-       total_female_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'CORNER'] )
-       total_female_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'NORMAL'])
+       total_female_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'CORNER'  and row[3] not in res_query_special_blocks] )
+       total_female_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'NORMAL' and row[3] not in res_query_special_blocks])
+       total_female_available_special_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'F' and row[0].value == 'NORMAL' and row[3] in res_query_special_blocks])
        total_male_available_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M'])
-       total_male_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'CORNER'])
-       total_male_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'NORMAL'])
+       total_male_available_corner_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'CORNER' and row[3] not in res_query_special_blocks])
+       total_male_available_normal_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'NORMAL' and row[3] not in res_query_special_blocks])
+       total_male_available_special_room_in_session = len([row[1].value for row in query_resp1  if row[1].value == 'M' and row[0].value == 'NORMAL' and row[3] in res_query_special_blocks])
        query2 = await session.execute(select(BlockModel.num_norm_rooms_in_block,BlockModel.num_corn_rooms_in_block,
-                                      BlockModel.gender ).where(BlockModel.deleted == 'N'))
+                                      BlockModel.gender, BlockModel.id ).where(BlockModel.deleted == 'N'))
        query_resp2 = query2.all()
-       total_male_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'M'])
-       total_male_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'M'])
-       total_male_rooms_in_session = total_male_normal_room_in_session + total_male_corner_room_in_session
-       total_female_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'F'])
-       total_female_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'F'])
-       total_female_rooms_in_session = total_female_normal_room_in_session + total_female_corner_room_in_session
+       total_male_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'M' and row[3] not in res_query_special_blocks ])
+       total_male_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'M' and row[3] not in res_query_special_blocks])
+       total_male_special_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'M' and row[3] in res_query_special_blocks])
+       total_male_rooms_in_session = total_male_normal_room_in_session + total_male_corner_room_in_session + total_male_special_room_in_session
+       total_female_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'F' and row[3] not in res_query_special_blocks])
+       total_female_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'F' and row[3] not in res_query_special_blocks])
+       total_female_special_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'F' and row[3]  in res_query_special_blocks])
+       total_female_rooms_in_session = total_female_normal_room_in_session + total_female_corner_room_in_session + total_female_special_room_in_session
        # space stat
        query3 = await session.execute(select(RoomModel.capacity,BlockModel.num_norm_rooms_in_block,
                                              BlockModel.num_corn_rooms_in_block,BlockModel.gender , 
@@ -157,10 +164,11 @@ async def get_rooms_stat_service(session:async_sessionmaker):
                                              .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                       .where(BlockModel.deleted == 'N'))
        query_resp3 = query3.all()
+
        total_female_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F'])
-       total_female_normal_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[7] != 77])
-       total_female_corner_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[7] != 77])
-       total_female_special_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[7] == 77])
+       total_female_normal_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[7] not in res_query_special_blocks])
+       total_female_corner_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[7] not in res_query_special_blocks])
+       total_female_special_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F' and row[7] in res_query_special_blocks])
        total_male_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'M'])
        total_male_normal_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'NORMAL'])
        total_male_corner_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'M' and row[4].value == 'CORNER'])
@@ -169,9 +177,9 @@ async def get_rooms_stat_service(session:async_sessionmaker):
                                       .where(StudentModel.curr_session == external_services.get_current_academic_session()[1]))
        query_resp4 = query4.scalars().all()
        total_female_allocated_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F'])
-       total_female_allocated_normal_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[7] != 77])
-       total_female_allocated_corner_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[7] != 77 ])
-       total_female_allocated_special_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[7] == 77 ])
+       total_female_allocated_normal_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'NORMAL' and row[7] not in res_query_special_blocks])
+       total_female_allocated_corner_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[4].value == 'CORNER' and row[7] not in res_query_special_blocks ])
+       total_female_allocated_special_space_in_session = sum([ row[6] for row in query_resp3 if row[3].value == 'F' and row[7] in res_query_special_blocks])
        total_female_unallocated_space_in_session = int(total_female_space_in_session) - int(total_female_allocated_space_in_session)
        total_female_unallocated_normal_space_in_session = int(total_female_normal_space_in_session)  - int(total_female_allocated_normal_space_in_session)
        total_female_unallocated_corner_space_in_session = int(total_female_corner_space_in_session)  - int(total_female_allocated_corner_space_in_session)
@@ -187,13 +195,13 @@ async def get_rooms_stat_service(session:async_sessionmaker):
    else:
        return True,{ 
                         "room_stat": {'total_female_rooms_in_session': total_female_rooms_in_session,
-                                'total_female_normal_room_in_session':total_female_normal_room_in_session,'total_female_corner_room_in_session':total_female_corner_room_in_session,
+                                'total_female_normal_room_in_session':total_female_normal_room_in_session,'total_female_corner_room_in_session':total_female_corner_room_in_session, 'total_female_special_room_in_session': total_female_special_room_in_session,
                                  'total_female_available_room_in_session':total_female_available_room_in_session,'total_female_available_normal_room_in_session':total_female_available_normal_room_in_session,
-                                'total_female_available_corner_room_in_session':total_female_available_corner_room_in_session,
+                                'total_female_available_corner_room_in_session':total_female_available_corner_room_in_session,'total_female_available_special_room_in_session':total_female_available_special_room_in_session,
                                  'total_male_rooms_in_session':total_male_rooms_in_session,
-                                'total_male_normal_room_in_session':total_male_normal_room_in_session,'total_male_corner_room_in_session':total_male_corner_room_in_session,
+                                'total_male_normal_room_in_session':total_male_normal_room_in_session,'total_male_corner_room_in_session':total_male_corner_room_in_session, 'total_male_special_room_in_session':total_male_special_room_in_session,
                                 'total_male_available_room_in_session':total_male_available_room_in_session,  'total_male_available_normal_room_in_session':total_male_available_normal_room_in_session,
-                                 'total_male_available_corner_room_in_session':total_male_available_corner_room_in_session},
+                                 'total_male_available_corner_room_in_session':total_male_available_corner_room_in_session, 'total_male_available_special_room_in_session':total_male_available_special_room_in_session},
                         "space_stat": {"total_female_space_in_session":total_female_space_in_session, "total_female_normal_space_in_session":total_female_normal_space_in_session,
                                        "total_female_corner_space_in_session":total_female_corner_space_in_session, "total_female_special_space_in_session":total_female_special_space_in_session,
                                        "total_female_unallocated_space_in_session":total_female_unallocated_space_in_session,
@@ -596,7 +604,7 @@ async def list_all_available_blocks_given_gender_service(gender:str, session:asy
 async def get_available_space_from_guest_house_service(session:async_sessionmaker):
     query = await session.execute(select(func.sum(RoomModel.capacity), func.sum(RoomModel.num_space_occupied))
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
-                                            .where(BlockModel.id == 77)
+                                            .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
                                             .where(BlockModel.gender == "F")
                                             .with_for_update())
     total_capacity, used_capacity = query.fetchone()

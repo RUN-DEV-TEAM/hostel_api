@@ -48,6 +48,7 @@ async def test_queries_2(session: async_sessionmaker = Depends(get_session)):
     #                                         .where(BlockModel.gender == "F")
     #                                         .with_for_update())
     # used_capacity = query2.fetchone()
+    
     query_f = await session.execute(select(func.count(StudentModel.id))
                                             .where( StudentModel.room_id.in_(select(RoomModel.id).where(
                                                     RoomModel.block_id.in_(select(BlockModel.id).where(
@@ -55,8 +56,11 @@ async def test_queries_2(session: async_sessionmaker = Depends(get_session)):
                                                                 BlockModel.proxy_to_portals_lodge == 'YES' ) ))
                                                 ).where(RoomModel.block_id.in_([55,56]))) ).where(StudentModel.medical_attention == 'YES'))
     query_res = query_f.scalar_one()
+    
+    q2 = await session.execute(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14'))
+    res = q2.scalars().all()
     print("####################11111111")
-    print(query_res)
+    print(res)
     return {"message":"Testing2"}
 
 

@@ -16,6 +16,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
 
+
 def require_permission(required_role: UserType):
     def permission_dependency(user: ReturnSignUpUser =Depends(get_current_user)):
         if not isinstance(user, dict):
@@ -90,6 +91,8 @@ async def authenticate_user(email:str, password:str,  session: async_sessionmake
     if not user[0]:
         return False, {"message": f"User with the email {email} does not exist in our database"}
     user = user[1]
+    if user['status'].value == 'INACTIVE':
+        return False,{"message": "Account not activated yet, kindly contact the admin"}
     if not verify_password(password, user["password"]):
         return False,{"message": "Invalid Email/Password supplied!"}
     user.update({"token": create_access_token(data={"sub":user["email"]},expires_delta=90)})

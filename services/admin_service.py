@@ -34,6 +34,33 @@ async def sign_up_service(user_create:CreateUser, session:async_sessionmaker) ->
        return False, data
 
 
+async def activate_user_service(email:str, session:async_sessionmaker):
+    try:
+        user_query = await session.execute(select(UserModel).where(UserModel.email == email))
+        user = user_query.scalar_one()
+        if user:
+            user.status = 'ACTIVE'
+            await session.commit()
+            return True, {"message":"Account activated successfully"}
+        else:
+            return False, {"message":f"No account with the email {email} found in our record"}
+    except:
+            return False, {"message":f"No account with the email {email} found in our record"}
+
+
+async def deactivate_user_service(email:str, session:async_sessionmaker):
+    try:
+        user_query = await session.execute(select(UserModel).where(UserModel.email == email))
+        user = user_query.scalar_one()
+        if user:
+            user.status = 'INACTIVE'
+            await session.commit()
+            return True, {"message":"Account deactivated successfully"}
+        else:
+            return False, {"message":f"No account with the email {email} found in our record"}
+    except:
+            return False, {"message":f"No account with the email {email} found in our record"}
+
 async def list_user_service(session:async_sessionmaker) -> List[ListUser]:
       result = await session.execute(select(UserModel))
       users = result.scalars().all()

@@ -6,6 +6,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
 from schemas.userSchema import ResponseToken,ReturnSignUpUser,CreateUser
 from services import admin_service
+from api.endpoints.endpoint_helper import  require_permission
+from schemas.helperSchema import UserType
 router = APIRouter()
 
 
@@ -26,9 +28,28 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     user = await endpoint_helper.authenticate_user(form_data.username, form_data.password, session)
     if not user[0]:
             return JSONResponse(status_code=404, content=user[1]) 
-    print(user[1])
     return {"access_token": user[1]["token"], "token_type": "bearer",
              "user":{ "email": user[1]["email"],"user_type": user[1]["user_type"],"gender": user[1]["gender"]}}
+
+
+            # "status": user[1]["status"],"gender": user[1]["gender"],"user_type": user[1]["user_type"]
+
+
+@router.post("/activate_user", response_model='')
+async def activate_user_func(email:str,  session: async_sessionmaker = Depends(get_session),user: ReturnSignUpUser =Depends(require_permission(UserType.SUPER))):
+    user = await admin_service.activate_user_service(email, session)
+    if not user[0]:
+            return JSONResponse(status_code=404, content=user[1]) 
+    return user[1]
+
+
+@router.post("/deactivate_user", response_model='')
+async def activate_user_func(email:str,  session: async_sessionmaker = Depends(get_session),user: ReturnSignUpUser =Depends(require_permission(UserType.SUPER))):
+    user = await admin_service.deactivate_user_service(email, session)
+    if not user[0]:
+            return JSONResponse(status_code=404, content=user[1]) 
+    return user[1]
+
 
 
             # "status": user[1]["status"],"gender": user[1]["gender"],"user_type": user[1]["user_type"]

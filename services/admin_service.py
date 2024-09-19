@@ -455,6 +455,10 @@ async def  update_room_in_session_service(update_data:UpdateRoomSchema, session:
         query = await session.execute(select(RoomModel).where(RoomModel.id == update_data['id']))
         query_res = query.scalar_one()
         if query_res:
+            query_stud_in_room = await session.execute(select(func.count(StudentModel.id)).where(StudentModel.room_id == query_res.id))
+            num_stud_in_room = query_stud_in_room.scalar_one() 
+            if num_stud_in_room > 0 :
+                return True, {"message":f"{num_stud_in_room} students are already allocated to this room, kindly deallocate these students from the room before you can update the room's properties"}
             query_res.room_condition = update_data['room_condition']
             query_res.capacity = update_data['capacity']
             query_res.room_type = update_data['room_type']

@@ -15,13 +15,13 @@ router = APIRouter()
 
 
 @router.get("/list_users", response_model=List[ReturnSignUpUser])
-async def list_users(session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def list_users(session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   return await admin_service.list_user_service(session)
 
 
 # 
 @router.get("/get_user_by_email", response_model=ListUser)
-async def get_user(email:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def get_user(email:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res =  await admin_service.get_user_by_email_service(email, session)
   if not res:
     return JSONResponse(status_code=404, content={"message": "User not found"})     
@@ -92,7 +92,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 
 
 @router.post("/random_assign_room_to_student_in_session")
-async def random_assign_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def random_assign_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
@@ -103,7 +103,7 @@ async def random_assign_room_to_student_in_session_func(mat_no:str, session: asy
 
 # param: matric number
 @router.post("/assign_room_in_specific_block_to_student_in_session")
-async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.assign_room_in_specific_block_to_student_in_session_service(mat_no,block_id,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
@@ -113,7 +113,7 @@ async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,bl
 
 # param: matric number
 @router.post("/assign_specific_space_in_room_to_student_in_session")
-async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(mat_no,room_id,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
@@ -133,7 +133,7 @@ async def get_student_room_in_session_func(mat_no:str,session_id:str, session: a
 
 
 @router.delete("/delete_student_from_room_in_session",description="Just a soft delete")
-async def delete_student_from_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def delete_student_from_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.delete_student_from_room_in_session_service(mat_no, session_id, session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
@@ -161,7 +161,7 @@ async def get_room_status_in_session_func(room_id:int, session: async_sessionmak
 
 
 @router.put("/update_room_in_session")
-async def update_room_in_session_func(update_data:UpdateRoomSchema, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission(UserType.ADMIN))):
+async def update_room_in_session_func(update_data:UpdateRoomSchema, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.update_room_in_session_service(update_data, session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 

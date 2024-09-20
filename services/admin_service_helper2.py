@@ -213,6 +213,7 @@ async def decre_update_block_record_given_block_id(block_id:int, session:async_s
    
 
 async def default_query_db_for_random_available_room(stud_obj,session:async_sessionmaker):
+#   NB: 14-> Guest House, 6->PG, 11->Dest, 12->Admin, 13->All
   res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
                                             BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
                                             .join(BlockModel, RoomModel.block_id == BlockModel.id)
@@ -220,6 +221,9 @@ async def default_query_db_for_random_available_room(stud_obj,session:async_sess
                                             .where(BlockModel.block_status == "AVAILABLE")
                                             .where(BlockModel.gender == stud_obj['sex'])
                                             .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '6')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '11')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '12')))
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -238,6 +242,9 @@ async def query_db_for_random_available_room(stud_obj,session:async_sessionmaker
                                             .where(BlockModel.gender == stud_obj['sex'])
                                             .where(BlockModel.proxy_to_portals_lodge == 'NO')
                                             .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '6')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '11')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '12')))
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -264,6 +271,9 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
                                             .where(BlockModel.water_access == 'YES')
                                             .where(BlockModel.airy == 'YES')
                                             .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '6')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '11')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '12')))
                                             .with_for_update()
                                             .order_by(func.random())
                                             .limit(1))
@@ -277,6 +287,9 @@ async def query_db_for_random_available_room_for_health_challenge_students(stud_
                                             .where(BlockModel.water_access == 'YES')
                                             .where(BlockModel.airy == 'YES')
                                             .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '6')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '11')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '12')))
                                             .with_for_update().order_by(func.random()).limit(1))
       alt_room = res2.fetchone()
       if not alt_room:
@@ -296,18 +309,15 @@ async def query_db_for_random_available_room_with_faculty_proximity_condition(st
                                             .where(BlockModel.proxy_to_portals_lodge == 'NO')
                                             .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == stud_obj['college_id'])))
                                             .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '6')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '11')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '12')))
                                             .with_for_update()
-                                            .order_by(func.random()).where(
-                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
-                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
-                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
-                                                )
-                                            .limit(1))
+                                            .order_by(func.random()).limit(1))
   room = res.fetchone()
   if not room:
       return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(stud_obj['sex'])} in {stud_obj['curr_session']} academic session"}
   return True, room
-
 
 
 async def  query_db_for_random_room_in_quest_house(stud_obj, session):
@@ -326,29 +336,35 @@ async def  query_db_for_random_room_in_quest_house(stud_obj, session):
       return False, {"message":f"Is like no available room in quest house in {stud_obj['curr_session']} academic session"}
     return True, room
 
- 
+
+                                            
+
 async def get_percentage_of_allocation_in_health_blocks(sex, session):
     #160*0.6
     #152*0.6
     if sex == 'F':      
         query_f = await session.execute(select(func.count(StudentModel.id))
-                                            .where( StudentModel.room_id.in_(select(RoomModel.id).where(
-                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
-                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
-                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
-                                                ).where(RoomModel.block_id.in_([76,77]))) ).where(StudentModel.medical_attention == 'YES'))
+                                            .where( StudentModel.room_id.in_(select(RoomModel.id)
+                                                    .where(RoomModel.block_id.in_(
+                                                     select(BlockModel.id).where(BlockModel.proxy_to_portals_lodge == 'YES')
+                                                    .where(BlockModel.water_access == 'YES')
+                                                    .where(BlockModel.airy == 'YES')
+                                                    .where(BlockModel.gender == 'F')
+                                                ))) ).where(StudentModel.medical_attention == 'YES'))
         query_res = query_f.scalar_one()
         if query_res <= 96:
             return True
         else:
             return False
     elif sex == 'M':
-        query_m = await session.execute(select(func.count(StudentModel.id))
-                                            .where( StudentModel.room_id.in_(select(RoomModel.id).where(
-                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
-                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
-                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
-                                                ).where(RoomModel.block_id.in_([51,52]))) ).where(StudentModel.medical_attention == 'YES'))
+        query_m =  await session.execute(select(func.count(StudentModel.id))
+                                            .where( StudentModel.room_id.in_(select(RoomModel.id)
+                                                    .where(RoomModel.block_id.in_(
+                                                     select(BlockModel.id).where(BlockModel.proxy_to_portals_lodge == 'YES')
+                                                    .where(BlockModel.water_access == 'YES')
+                                                    .where(BlockModel.airy == 'YES')
+                                                    .where(BlockModel.gender == 'M')
+                                                ))) ).where(StudentModel.medical_attention == 'YES'))
         query_res = query_m.scalar_one()
         if query_res <= 92:
             return True

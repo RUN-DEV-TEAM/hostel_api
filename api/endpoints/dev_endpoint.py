@@ -50,17 +50,19 @@ async def test_queries_2(session: async_sessionmaker = Depends(get_session)):
     # used_capacity = query2.fetchone()
     
     query_f = await session.execute(select(func.count(StudentModel.id))
-                                            .where( StudentModel.room_id.in_(select(RoomModel.id).where(
-                                                    RoomModel.block_id.in_(select(BlockModel.id).where(
-                                                          or_( BlockModel.airy == 'YES',BlockModel.water_access == 'YES',
-                                                                BlockModel.proxy_to_portals_lodge == 'YES' ) ))
-                                                ).where(RoomModel.block_id.in_([55,56]))) ).where(StudentModel.medical_attention == 'YES'))
+                                            .where( StudentModel.room_id.in_(select(RoomModel.id)
+                                                    .where(RoomModel.block_id.in_(
+                                                     select(BlockModel.id).where(BlockModel.proxy_to_portals_lodge == 'YES')
+                                                    .where(BlockModel.water_access == 'YES')
+                                                    .where(BlockModel.airy == 'YES')
+                                                    .where(BlockModel.gender == 'M')
+                                                ))) ).where(StudentModel.medical_attention == 'YES'))
     query_res = query_f.scalar_one()
     
-    q2 = await session.execute(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14'))
-    res = q2.scalars().all()
+    # q2 = await session.execute(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14'))
+    # res = q2.scalars().all()
     print("####################11111111")
-    print(res)
+    print(query_res)
     return {"message":"Testing2"}
 
 

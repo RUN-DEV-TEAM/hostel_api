@@ -403,15 +403,18 @@ async def get_student_room_in_session_service(mat_no:str,session_id:str, session
         return True,stud_room[1]
 
 # num_space_occupied
-async def delete_student_from_room_in_session_service(mat_no:str,session_id:str, session:async_sessionmaker):
-     stud_obj = {"matric_number":mat_no, "curr_session":session_id}
-     stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
-     if stud_room[0]:
-         res = await admin_service_helper2.decre_update_room_status_given_room_id(stud_room[1]['room_details']['id'],stud_room[1]['id'],session)
-         await session.commit()
-         return True,res[1]
-     else:
-         return False, stud_room[1]
+async def delete_student_from_room_in_session_service(mat_no:str, session:async_sessionmaker):
+     try: 
+        stud_obj = {"matric_number":mat_no, "curr_session":external_services.get_current_academic_session()[1]}
+        stud_room = await admin_service_helper2.get_student_room_in_session(stud_obj,session)
+        if stud_room[0]:
+            res = await admin_service_helper2.decre_update_room_status_given_room_id(stud_room[1]['room_details']['id'],stud_room[1]['id'],session)
+            await session.commit()
+            return True,res[1]
+        else:
+            return False, stud_room[1]
+     except:
+        return False, {"message":"Error deleting student from room in session"}
 
 
 

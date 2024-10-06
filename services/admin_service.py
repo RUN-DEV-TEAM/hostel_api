@@ -636,17 +636,24 @@ async def list_all_available_blocks_given_gender_service(gender:str, session:asy
       
 
 async def get_available_space_from_guest_house_service(session:async_sessionmaker):
-    query = await session.execute(select(func.sum(RoomModel.capacity), func.sum(RoomModel.num_space_occupied))
-                                            .join(BlockModel, RoomModel.block_id == BlockModel.id)
-                                            .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
-                                            .where(BlockModel.gender == "F")
-                                            .with_for_update())
-    total_capacity, used_capacity = query.fetchone()
-    left_space = total_capacity - used_capacity
-    if left_space >= 0:
-        return True, {"available_special_space":left_space}
-    else:
-         return False, {"message":"Can't get available special at the moment"}
+    try:
+        query = await session.execute(select(func.sum(RoomModel.capacity), func.sum(RoomModel.num_space_occupied))
+                                                .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                                .where(BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                                .where(BlockModel.gender == "F")
+                                                .with_for_update())
+        total_capacity, used_capacity = query.fetchone()
+        if total_capacity is None or used_capacity is None:
+            return False, {"message":"Is like blocks have not been created for this purpose at the moment, contact admin"}
+        else:
+            left_space = total_capacity - used_capacity
+            if left_space >= 0:
+                return True, {"available_special_space":left_space}
+            else:
+                return False, {"message":"Can't get available special at the moment"}        
+    except:
+        return False, {"message":"Error getting available space in "}        
+
 
 def list_all_colleges_service():
     res = admin_service_helper1.list_all_colleges()
@@ -654,7 +661,11 @@ def list_all_colleges_service():
         return True, res
     else:
         return False, {"message":"Can't fetch college(s) at the moment"}
+    
+    
     # 
+
+
 # NOTE:  fetchone() vs scalar_one()
 # .where(RoomModel.id.notin_(list_occupied_room_in_session_id))
 

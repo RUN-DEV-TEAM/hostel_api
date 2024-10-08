@@ -644,13 +644,13 @@ async def get_available_space_from_guest_house_service(session:async_sessionmake
                                                 .with_for_update())
         total_capacity, used_capacity = query.fetchone()
         if total_capacity is None or used_capacity is None:
-            return True, {"available_special_space":0}
+            return True, {"available_special_space":-1}
         else:
             left_space = total_capacity - used_capacity
             if left_space >= 0:
                 return True, {"available_special_space":left_space}
             else:
-                return True, {"available_special_space":0}       
+                return True, {"available_special_space":-1}       
     except:
         return False, {"message":"Error getting available space in "}        
 

@@ -119,7 +119,9 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sess
         room_details = await get_room_details_given_student_room_id(room_obj['id'],session)
         if room_details[0]:
             room_dict.update({"room_details":room_details[1]})
-            external_services.send_email_notification(stud_obj,room_dict)
+            s =  external_services.send_email_notification(stud_obj,room_dict)
+            print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+            print(s)
         return True,room_dict
 
     except:

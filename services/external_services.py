@@ -51,6 +51,8 @@ def send_email_notification(stud_obj,room_dict):
             title = 'Miss'
         else:
             title = 'Mr.'
+        
+        headers = { 'accept': 'application/json', 'Content-Type': 'application/json'}
         data = {
                 "to": stud_obj['email'],
                 "cc": stud_obj['email_alternate'],
@@ -58,9 +60,9 @@ def send_email_notification(stud_obj,room_dict):
                 "from": "ict@run.edu.ng",
                 "fromname": "Redeemer's University",
                 "message": f"""{title} {stud_obj['surname']} {stud_obj['firstname']} of {stud_obj['dpt']} department, faculty of {stud_obj['college']}, with matric number  {stud_obj['matric_number']} has been allocated  {room_dict['room_details']['room_name']} of {room_dict['room_details']['block_name']} at {room_dict['room_details']['description'] } hostel for  {stud_obj['curr_session']} Academic Session """,
-                "subject": f"Notice of Hostel Allocation From Redeemer's University For {stud_obj['curr_session']} Academic Session."
+                "subject": f"Hostel Allocation ({stud_obj['curr_session']})."
                 }
-        response = requests.post('https://reg.run.edu.ng/apis/globals/sendemail',params=data)
+        response = requests.post('https://reg.run.edu.ng/apis/globals/sendemail',headers=headers, json=data)
         if response.status_code == 200:
             return True, {"message": "Email sent"}
         else:

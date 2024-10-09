@@ -5,7 +5,8 @@ from schemas.roomSchema import RoomSchemaDetailed,RoomAllocationResponseSchema,R
 from schemas.helperSchema import Gender
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.future import select
-from services import admin_service_helper1
+from services import admin_service_helper1, external_services
+
 
 
 
@@ -118,6 +119,7 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sess
         room_details = await get_room_details_given_student_room_id(room_obj['id'],session)
         if room_details[0]:
             room_dict.update({"room_details":room_details[1]})
+            external_services.send_email_notification(stud_obj,room_dict)
         return True,room_dict
 
     except:

@@ -93,6 +93,7 @@ class StudentModel(Base):
     college_id = Column(Integer, nullable=True)
     level = Column(String(3), nullable=True)
     email = Column(String(100), nullable=True)
+    email_alternate = Column(String(100), nullable=True)
     accom_paid = Column(String(65), nullable=True)
     accom_payable = Column(String(65), nullable=True)
     special_accom_paid = Column(String(65), nullable=True)

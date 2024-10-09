@@ -53,13 +53,15 @@ def send_email_notification(stud_obj,room_dict):
             title = 'Mr.'
         
         headers = { 'accept': 'application/json', 'Content-Type': 'application/json'}
+        # "message": f"""{title} {str(stud_obj['surname']).upper()} {stud_obj['firstname']} of {stud_obj['dpt']} department, faculty of {stud_obj['college']}, with matric number  {stud_obj['matric_number']} has been allocated  {room_dict['room_details']['room_name']} of {room_dict['room_details']['block_name']} at {room_dict['room_details']['description'] } hostel for  {stud_obj['curr_session']} Academic Session """,
+        # Miss Ayomide has been allocated a bed space in Block 20 Room 5
         data = {
                 "to": stud_obj['email'],
                 "cc": stud_obj['email_alternate'],
                 "bcc": "",
                 "from": "ict@run.edu.ng",
                 "fromname": "Redeemer's University",
-                "message": f"""{title} {stud_obj['surname']} {stud_obj['firstname']} of {stud_obj['dpt']} department, faculty of {stud_obj['college']}, with matric number  {stud_obj['matric_number']} has been allocated  {room_dict['room_details']['room_name']} of {room_dict['room_details']['block_name']} at {room_dict['room_details']['description'] } hostel for  {stud_obj['curr_session']} Academic Session """,
+                "message": f" {title} {str(stud_obj['surname']).upper()} {str(stud_obj['firstname']).capitalize()} has been allocated a bed space in {room_dict['room_details']['block_name']} {room_dict['room_details']['room_name']}.",
                 "subject": f"Hostel Allocation ({stud_obj['curr_session']})."
                 }
         response = requests.post('https://reg.run.edu.ng/apis/globals/sendemail',headers=headers, json=data)

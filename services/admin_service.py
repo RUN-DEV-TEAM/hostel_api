@@ -334,10 +334,11 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
-
+    print("@@@@@@@@@@@@@@@@@@@@@@@")
+    print(admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj))
     get_room_condition = {'room_cat':'GENERAL'}
     if int(stud_obj['exemption_id']) >0:
-        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
+        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj) > 0:
             get_room_condition['room_cat'] = 'SPECIAL'          
         res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
         if res[0]:
@@ -349,7 +350,7 @@ async def first_condition_before_ramdom_room_allocation(stud_obj,session):
     if int(stud_obj['accom_paid']) < int(stud_obj['accom_payable']) :
             return False, {"message": f"#{stud_obj['accom_payable']}  is the amount payable for accommodation but you have just paid #{int(stud_obj['accom_paid'])}"}
     elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :  
-        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0:
+        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0 and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj):
             get_room_condition['room_cat'] = 'SPECIAL'       
             res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
             if res[0]:

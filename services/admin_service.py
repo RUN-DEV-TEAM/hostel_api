@@ -192,7 +192,7 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        total_male_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'M' and row[3] not in m_res_query_special_blocks])
        total_male_special_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'M' and row[3] in m_res_query_special_blocks])
        total_male_rooms_in_session = total_male_normal_room_in_session + total_male_corner_room_in_session + total_male_special_room_in_session
-      
+  
        total_female_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'F' and row[3] not in f_res_query_special_blocks])
        total_female_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'F' and row[3] not in f_res_query_special_blocks])
        total_female_special_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'F' and row[3]  in f_res_query_special_blocks])

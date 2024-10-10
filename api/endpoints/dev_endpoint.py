@@ -49,20 +49,26 @@ async def test_queries_2(session: async_sessionmaker = Depends(get_session)):
     #                                         .with_for_update())
     # used_capacity = query2.fetchone()
     
-    query_f = await session.execute(select(func.count(StudentModel.id))
-                                            .where( StudentModel.room_id.in_(select(RoomModel.id)
-                                                    .where(RoomModel.block_id.in_(
-                                                     select(BlockModel.id).where(BlockModel.proxy_to_portals_lodge == 'YES')
-                                                    .where(BlockModel.water_access == 'YES')
-                                                    .where(BlockModel.airy == 'YES')
-                                                    .where(BlockModel.gender == 'M')
-                                                ))) ).where(StudentModel.medical_attention == 'YES'))
-    query_res = query_f.scalar_one()
+    # query_f = await session.execute(select(func.count(StudentModel.id))
+    #                                         .where( StudentModel.room_id.in_(select(RoomModel.id)
+    #                                                 .where(RoomModel.block_id.in_(
+    #                                                  select(BlockModel.id).where(BlockModel.proxy_to_portals_lodge == 'YES')
+    #                                                 .where(BlockModel.water_access == 'YES')
+    #                                                 .where(BlockModel.airy == 'YES')
+    #                                                 .where(BlockModel.gender == 'M')
+    #                                             ))) ).where(StudentModel.medical_attention == 'YES'))
+    # query_res = query_f.scalar_one()
     
     # q2 = await session.execute(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14'))
     # res = q2.scalars().all()
-    print("####################11111111")
-    print(query_res)
+    # print(query_res)
+    query_special_blocks = await session.execute(select(BlockProximityToFacultyModel.block_id)
+                                                        .where(BlockProximityToFacultyModel.faculty == '14')
+                                                        .where(BlockProximityToFacultyModel.block_id.in_(select(BlockModel.id).where(BlockModel.gender == 'M'))))
+
+    res_query_special_blocks = query_special_blocks.scalars().all() 
+    print("$$$$$$$$$$$$$$$$$$$$$$$$$$$$") 
+    print(res_query_special_blocks)
     return {"message":"Testing2"}
 
 

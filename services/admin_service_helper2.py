@@ -58,6 +58,14 @@ async def get_random_available_room(stud_obj:dict,get_room_condition:dict, sessi
           return await backup_room_getter(stud_obj,health_block_counter, session)
     elif get_room_condition['room_cat'] == "GENERAL":
           return await backup_room_getter(stud_obj,health_block_counter, session)
+    
+    elif stud_obj['level'] == "100" and stud_obj['sex']  == "F":
+        room_res = await query_db_for_random_available_room_female_100_level(stud_obj, session)
+        if room_res[0]:
+            return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
+        else:
+          return await backup_room_getter(stud_obj,health_block_counter, session)        
+        
     elif get_room_condition['room_cat'] == "SPECIAL":
         room_res = await query_db_for_random_room_in_quest_house(stud_obj, session)
         if  room_res[0]:
@@ -212,7 +220,28 @@ async def decre_update_block_record_given_block_id(block_id:int, session:async_s
     else:
         return True, {"message":"Function decre_update_block_status_given_room_id successfully executed"}
    
-   
+
+async def query_db_for_random_available_room_female_100_level(stud_obj,session:async_sessionmaker):
+  res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,
+                                            BlockModel.num_of_allocated_rooms, BlockModel.gender,RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition )
+                                            .join(BlockModel, RoomModel.block_id == BlockModel.id)
+                                            .where(RoomModel.room_status == "AVAILABLE")
+                                            .where(BlockModel.block_status == "AVAILABLE")
+                                            .where(BlockModel.gender == stud_obj['sex'])
+                                            .where(BlockModel.id.in_(65,66,68,69))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '14')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '6')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '11')))
+                                            .where(~BlockModel.id.in_(select(BlockProximityToFacultyModel.block_id).where(BlockProximityToFacultyModel.faculty == '12')))
+                                            .with_for_update()
+                                            .order_by(func.random())
+                                            .limit(1))
+  room = res.fetchone()
+  if not room:
+      return False, {"message":f"Is like no available room/block for gender {admin_service_helper1.get_full_gender_given_shortName(stud_obj['sex'])} in {stud_obj['curr_session']} academic session"}
+  return True, room
+
+
 
 async def default_query_db_for_random_available_room(stud_obj,session:async_sessionmaker):
 #   NB: 14-> Guest House, 6->PG, 11->Dest, 12->Admin, 13->All

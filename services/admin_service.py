@@ -355,8 +355,6 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
 
 
 async def first_condition_before_ramdom_room_allocation(stud_obj,session):
-    print("@@@@@@@@@@@@@@@@@@@@@@@")
-    print(admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj))
     get_room_condition = {'room_cat':'GENERAL'}
     if int(stud_obj['exemption_id']) >0:
         if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj) > 0:

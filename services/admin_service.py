@@ -204,7 +204,8 @@ async def get_rooms_stat_service(session:async_sessionmaker):
                                              BlockModel.num_corn_rooms_in_block,BlockModel.gender , 
                                              RoomModel.room_type, RoomModel.id, RoomModel.num_space_occupied,RoomModel.block_id)
                                              .join(BlockModel, RoomModel.block_id == BlockModel.id)
-                                      .where(BlockModel.deleted == 'N'))
+                                      .where(BlockModel.deleted == 'N')
+                                      .where(RoomModel.room_status == 'AVAILABLE'))
        query_resp3 = query3.all()
 
        total_female_space_in_session =  sum([ row[0] for row in query_resp3 if row[3].value == 'F'])

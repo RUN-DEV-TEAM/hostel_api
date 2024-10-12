@@ -89,6 +89,17 @@ async def test_queries(session: async_sessionmaker = Depends(get_session)):
     return {"message":"Testing"}
 
 
+
+@router.post("/delete_dummy")
+async def delete_dummy_func(session: async_sessionmaker = Depends(get_session)):
+    get_occupant_matr_query = await session.execute(select(StudentModel.matric_number))
+    res = get_occupant_matr_query.all()
+    for mat in res:
+      #  act_res = await admin_service.delete_student_from_room_in_session_service(mat[0], session)
+      #  print(act_res)
+       await asyncio.sleep(1)
+    return {"message":"Testing"}
+
 # create block data 
 
 blocks_6000 = [
@@ -195,6 +206,7 @@ async def test_queries(session: async_sessionmaker = Depends(get_session)):
         
         await asyncio.sleep(1)
     return {"message":"Testing"}
+
 
 
 

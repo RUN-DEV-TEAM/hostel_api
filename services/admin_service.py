@@ -190,6 +190,7 @@ async def get_rooms_stat_service(session:async_sessionmaker):
        
        total_male_normal_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'M' and row[3] not in m_res_query_special_blocks ])
        total_male_corner_room_in_session = sum([ row[1] for row in query_resp2 if row[2].value == 'M' and row[3] not in m_res_query_special_blocks])
+       
        total_male_special_room_in_session = sum([ row[0] for row in query_resp2 if row[2].value == 'M' and row[3] in m_res_query_special_blocks])
        total_male_rooms_in_session = total_male_normal_room_in_session + total_male_corner_room_in_session + total_male_special_room_in_session
   
@@ -370,7 +371,7 @@ async def first_condition_before_ramdom_room_allocation(stud_obj,session):
     if int(stud_obj['accom_paid']) < int(stud_obj['accom_payable']) :
             return False, {"message": f"#{stud_obj['accom_payable']}  is the amount payable for accommodation but you have just paid #{int(stud_obj['accom_paid'])}"}
     elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :  
-        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0 and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj):
+        if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0 and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj) and int(stud_obj['accountBalance']) <=0:
             get_room_condition['room_cat'] = 'SPECIAL'       
             res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
             if res[0]:

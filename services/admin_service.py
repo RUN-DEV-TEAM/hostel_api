@@ -408,10 +408,23 @@ async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str
                 allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],session)
                 if allo_room:
                     return True,allo_room[1]
+                else:
+                    return False, allo_room[1]
             else:
                 return False, get_room[1] 
         else:
-            return True, check_for_stud_room[1]
+            del_res = await delete_student_from_room_in_session_service(mat_no, session)
+            if del_res[0]:
+                    get_room = await admin_service_helper2.get_specific_available_space_in_room(stud_obj,room_id,session)
+                    if get_room[0]:
+                        allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],session)
+                        if allo_room:
+                            return True,allo_room[1]
+                        else:
+                            return False, allo_room[1]                        
+                    else:
+                        return False, get_room[1] 
+            return False, del_res[1]
     else:
         return False,stud_profile[1]
 

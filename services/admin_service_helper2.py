@@ -233,7 +233,9 @@ async def decre_update_block_record_given_block_id(block_id:int, session:async_s
         return False,{"message":"Error executing Function decre_update_block_status_given_room_id "}
     else:
         return True, {"message":"Function decre_update_block_status_given_room_id successfully executed"}
-   
+
+
+
 
 async def query_db_for_random_available_room_female_freshers(stud_obj,session:async_sessionmaker):
   res =  await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.num_rooms_in_block,

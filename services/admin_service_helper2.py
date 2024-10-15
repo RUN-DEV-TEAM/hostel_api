@@ -39,7 +39,8 @@ async def backup_room_getter(stud_obj,health_block_counter, session):
         else:
             room_res = await default_query_db_for_random_available_room(stud_obj,session)
             if room_res[0]:
-                return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)  
+                return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed) 
+                # return False, {"message":"Suitable room for your faculty is not available at the moment, kindly try again later or contact the admin"}   
             else:
                 return False, {"message":"No room available at the moment for allocation"}                  
     else:
@@ -131,8 +132,10 @@ async def get_specific_available_space_in_room(in_data:dict, room_id:int,session
 
  
     
-async def room_allocation_service(stud_obj:dict,room_obj:dict,session:async_sessionmaker):
+async def room_allocation_service(stud_obj:dict,room_obj:dict,user_meta,session:async_sessionmaker):
     try:
+        stud_obj['allocated_by'] = user_meta['allocated_by']
+        stud_obj['client'] = user_meta['client']
         _allo_room = StudentModel(room_id=room_obj['id'],**stud_obj)
         session.add(_allo_room)
         await incre_update_room_status_given_room_id(room_obj, session)

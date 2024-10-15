@@ -293,7 +293,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
         return True,resp
 
 
-async def get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no, session):
+async def get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no,user_meta, session):
     mat_no = str(mat_no).strip()
     stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
     curr_session = external_services.get_current_academic_session()
@@ -302,7 +302,7 @@ async def get_stud_profile_and_randomly_assign_room_to_student_in_session_servic
         stud_obj['matric_number'] = mat_no
         stud_obj['curr_session'] = curr_session[1]
         stud_obj['medical_attention']= admin_service_helper1.list_of_matric_number_with_health_issue(mat_no)
-        res = await first_condition_before_ramdom_room_allocation(stud_obj,session)
+        res = await first_condition_before_ramdom_room_allocation(stud_obj,user_meta,session)
         if res[0]:
             return True,res[1]
         else:
@@ -311,12 +311,12 @@ async def get_stud_profile_and_randomly_assign_room_to_student_in_session_servic
         return False,stud_profile[1]
     
     
-async def random_assign_room_to_student_in_session_service(in_data:dict,get_room_condition:dict, session:async_sessionmaker):
+async def random_assign_room_to_student_in_session_service(in_data:dict,get_room_condition:dict,user_meta, session:async_sessionmaker):
     check_for_stud_room = await admin_service_helper2.get_student_room_in_session(in_data,session)
     if not check_for_stud_room[0]:
         get_room = await admin_service_helper2.get_random_available_room(in_data,get_room_condition,session)
         if get_room[0]:
-            allo_room = await admin_service_helper2.room_allocation_service(in_data,get_room[1],session)
+            allo_room = await admin_service_helper2.room_allocation_service(in_data,get_room[1],user_meta,session)
             if allo_room[0]:
                 return True,allo_room[1]
             else:
@@ -328,7 +328,7 @@ async def random_assign_room_to_student_in_session_service(in_data:dict,get_room
     
 
 
-async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,block_id:int, session:async_sessionmaker):
+async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str,block_id:int,user_meta, session:async_sessionmaker):
     stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
     curr_session = external_services.get_current_academic_session()
     if stud_profile[0] and curr_session[0]:
@@ -340,7 +340,7 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
         if not check_for_stud_room[0]:
             get_room = await admin_service_helper2.get_specific_available_room_in_block(stud_obj["sex"], curr_session[1],block_id,session)
             if get_room[0]:
-                allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],session)
+                allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],user_meta,session)
                 if allo_room:
                     return True,allo_room[1]
             else:
@@ -351,12 +351,12 @@ async def assign_room_in_specific_block_to_student_in_session_service(mat_no:str
         return False,stud_profile[1]
 
 
-async def first_condition_before_ramdom_room_allocation(stud_obj,session):
+async def first_condition_before_ramdom_room_allocation(stud_obj,user_meta,session):
     get_room_condition = {'room_cat':'GENERAL'}
     if int(stud_obj['exemption_id']) >0:
         if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj) > 0:
             get_room_condition['room_cat'] = 'SPECIAL'          
-        res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
+        res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,user_meta,session)
         if res[0]:
             return True, res[1]
         else:
@@ -368,14 +368,14 @@ async def first_condition_before_ramdom_room_allocation(stud_obj,session):
     elif int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) :  
         if (int(stud_obj['special_accom_paid']) >= int(stud_obj['special_accom_payable'])) and int(stud_obj['special_accom_paid']) > 0 and admin_service_helper1.check_eligibility_for_female_guest_house(stud_obj) and int(stud_obj['accountBalance']) <=0:
             get_room_condition['room_cat'] = 'SPECIAL'       
-            res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
+            res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,user_meta,session)
             if res[0]:
                 return True, res[1]
             else:
                 return False, res[1]
         elif int(stud_obj['special_accom_paid']) == -1 and (int(stud_obj['accom_paid']) >= int(stud_obj['accom_payable']) ):
             get_room_condition['room_cat'] = 'GENERAL'           
-            res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,session)
+            res = await random_assign_room_to_student_in_session_service(stud_obj,get_room_condition,user_meta,session)
             if res[0]:
                 return True, res[1]
             else:
@@ -388,7 +388,7 @@ async def first_condition_before_ramdom_room_allocation(stud_obj,session):
 
 
 
-async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str,room_id:int, session:async_sessionmaker):
+async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str,room_id:int,user_meta, session:async_sessionmaker):
     stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
     curr_session = external_services.get_current_academic_session()
     if stud_profile[0] and curr_session[0]:
@@ -400,7 +400,7 @@ async def assign_specific_space_in_room_to_student_in_session_service(mat_no:str
         if not check_for_stud_room[0]:
             get_room = await admin_service_helper2.get_specific_available_space_in_room(stud_obj,room_id,session)
             if get_room[0]:
-                allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],session)
+                allo_room = await admin_service_helper2.room_allocation_service(stud_obj,get_room[1],user_meta,session)
                 if allo_room:
                     return True,allo_room[1]
                 else:

@@ -104,6 +104,8 @@ class StudentModel(Base):
     exemption_reason = Column(String(191), nullable=True)
     room_id = Column(Integer, ForeignKey('t_rooms.id'), nullable=False)
     curr_session = Column(String(9), nullable=False)
+    allocated_by = Column(String(65), nullable=True)
+    client = Column(String(65), nullable=True)
     deleted = Column(Enum(Deleted), default=Deleted.N)
     created_at = Column(DateTime, server_default= text('CURRENT_TIMESTAMP'))
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())

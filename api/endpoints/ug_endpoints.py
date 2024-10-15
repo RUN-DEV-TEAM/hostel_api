@@ -12,7 +12,8 @@ router = APIRouter()
 
 @router.post("/allocate_room_to_student_in_session",response_model="")
 async def allocate_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
-  res = await student_service.get_student_profile_and_allocate_room_to_the_student_service(mat_no,session)
+  user_meta = {"allocated_by": user["email"], "client": "STUDENT_PORTAL"}
+  res = await student_service.get_student_profile_and_allocate_room_to_the_student_service(mat_no,user_meta,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:

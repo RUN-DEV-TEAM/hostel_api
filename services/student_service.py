@@ -31,7 +31,7 @@ async def get_student_profile_and_allocate_room_to_the_student_service(mat_no:st
             return True,res[1]
         return False,res[1]
     else:
-        return False,stud_profile[1]
+        return False,{"message":"Error getting either student's profile or current seesion"}
 
 
 

@@ -91,6 +91,7 @@ class RoomAllocationResponseSchema(BaseModel):
     program: str
     level: str
     curr_session:str
+    allocated_by: str
     created_at: str
     
 

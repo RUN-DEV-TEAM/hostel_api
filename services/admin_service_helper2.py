@@ -14,7 +14,7 @@ from services import admin_service_helper1, external_services
 async def get_student_room_in_session(in_data:dict, session:async_sessionmaker):
    result = await session.execute(select(StudentModel.id,StudentModel.matric_number,StudentModel.room_id,StudentModel.curr_session,
                                          StudentModel.surname,StudentModel.firstname,StudentModel.sex,StudentModel.program,StudentModel.level,
-                                         StudentModel.deleted,StudentModel.created_at,StudentModel.updated_at
+                                         StudentModel.deleted,StudentModel.created_at,StudentModel.updated_at, StudentModel.allocated_by
                                          ).where(StudentModel.matric_number == str(in_data['matric_number']).strip(),
                                                              StudentModel.curr_session == str(in_data['curr_session']).strip()))
    stud_room = result.fetchone()  
@@ -156,7 +156,7 @@ async def room_allocation_service(stud_obj:dict,room_obj:dict,user_meta,session:
 async def get_room_details_given_student_room_id(room_id:int, session:async_sessionmaker):
         room_details = await session.execute(select(RoomModel.id, RoomModel.room_name,RoomModel.capacity,RoomModel.num_space_occupied,BlockModel.block_name,BlockModel.description,
                                                     BlockModel.num_rooms_in_block,BlockModel.num_of_allocated_rooms,BlockModel.gender,
-                                                RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition   
+                                                RoomModel.room_type, RoomModel.block_id,RoomModel.room_status,RoomModel.room_condition  
                                        )
                                         .join(BlockModel, RoomModel.block_id == BlockModel.id)
                                         .where(RoomModel.id == room_id)

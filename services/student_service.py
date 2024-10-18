@@ -20,7 +20,7 @@ from services import admin_service
 
 async def get_student_profile_and_allocate_room_to_the_student_service(mat_no:str,user_meta,  session):
     stud_profile =  external_services.get_student_profile_in_session_given_matno(mat_no)
-    curr_session = '2024/2025' #external_services.get_current_academic_session()
+    curr_session = True,'2024/2025' #external_services.get_current_academic_session()
     if stud_profile[0]:
         if curr_session[0]:
             stud_obj = stud_profile[1]

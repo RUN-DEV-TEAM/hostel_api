@@ -1,0 +1,82 @@
+
+import csv
+import io
+
+# Your CSV data as a string
+csv_data = """
+RUN/MCM/22/13442,2,23
+RUN/PHY/23/15525,21,3
+RUN/THA/22/12467,9,9
+Run/bkf/22/12701,9,13
+Run/Bus/22/12719,9,12
+RUN/QSY/23/14474,31,17
+RUN/PSY/22/13669,11,22
+RUN/PHT/21/10156,9,24
+Run/eco/22/13339,21,4
+RUN/BDG/22/11987,11,7
+RUN/TTH/23/15875,25,22
+RUN/IFT/22/13166,5,2
+RUN/PAD/22/12776,2,21
+RUN/FRE/23/14679,22,8
+RUN/ECO/22/13348,22,3
+RUN/NSC/21/10096,18,4
+RUN/PUH/22/11910,10,1
+RUN/NSC/21/10118,18,6
+RUN/HIS/22/12304,15,21
+RUN/ESM/21/10458,30,22
+RUN/LAW/22/12502,30,40
+RUN/LAW/23/14905,11,17
+Run/pol/22/13644,9,16
+RUN/ACS/22/12699,9,12
+RUN/ICH/22/13147,39,5
+RUN/PAD/23/15788,25,3
+RUN/ECO/22/13345,21,4
+RUN/PSY/22/13677,11,22
+Run/urp/ 23/14481,4,9
+Run/puh/23/14412,20,24
+RUN/ENG/22/12243,25,6
+Run/eee/21/10387,30,2
+RUN/PHS/22/11850,18,5
+RUN/EMT/22/11993,21,1
+Run/ich/23/15148,2,14
+RUN/ANA/22/11617,7,3
+RUN/PHT/22/11889,29,40
+RUN/ARC/22/11929,29,12
+Run/mcb/22/13229,4,9
+RUN/PHT/21/10207,24,16
+Run/mee/22/12174,7,3
+Run/law/22/12492,9,5
+Run/mls/22/11681,29,37
+RUN/HIS/22/12278,6,20
+RUN/PHS/22/11830,25,4
+RUN/ACC/22/12616,8,3
+RUN/MCM/22/13484,21,4
+RUN/HIS/22/12359,21,5
+RUN/MCM/22/13395,6,24
+RUN/CMP/22/12882,6,13
+RUN/CMP/22/12787,6,13
+RUN/IFT/22/13171,6,9
+RUN/CMP/22/13007,6,9
+RUN/HIS/22/12335,11,22
+RUN/ACC/22/12631,6,18
+RUN/ACC/22/122661,6,18
+RUN/TTH/22/13716,41,19
+RUN/CMP/22/12848,6,9
+RUN/IFT/22/13192,6,18
+RUN/IFT/22/13189,6,18
+"""
+
+# Convert the string data into a file-like object
+csv_file = io.StringIO(csv_data.strip())
+
+# Read the CSV data
+csv_reader = csv.reader(csv_file)
+
+# Define headers for the data (assuming it has no headers)
+headers = ['code', 'value1', 'value2']
+
+# Convert the data into a list of dictionaries
+list_of_dicts = [dict(zip(headers, row)) for row in csv_reader]
+
+# Print the result
+print(list_of_dicts)

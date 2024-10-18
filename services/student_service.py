@@ -26,6 +26,8 @@ async def get_student_profile_and_allocate_room_to_the_student_service(mat_no:st
             stud_obj = stud_profile[1]
             stud_obj['matric_number'] = mat_no
             stud_obj['curr_session'] = curr_session[1]
+            if stud_obj['isFresher'] == 'N':
+                return  False,{"message":"Allocation for returning students is held for now, kindly check back later."}
             stud_obj['medical_attention']= admin_service_helper1.list_of_matric_number_with_health_issue(mat_no)
             res = await admin_service.first_condition_before_ramdom_room_allocation(stud_obj,user_meta,session)
             if res[0]:

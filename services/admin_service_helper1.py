@@ -120,11 +120,12 @@ def list_of_matric_number_with_health_issue(matno:str):
 # Note 2024/2025 is meant final year female student
 def check_eligibility_for_female_guest_house(stud_obj):
     try:
-        if stud_obj['level'] in ['400', '500', '600']:
-            if stud_obj['program_code'] in ["BDG","CHE","CPE","CVE","EEE","ESM","LAW","MEE","MLS","NUR","PHT","QSV","SGI","URP"] and str(stud_obj['level']) == '400':
-                return False
-            return True
-        else:
-            return False
+        return True
+        # if stud_obj['level'] in ['400', '500', '600']:
+        #     if stud_obj['program_code'] in ["BDG","CHE","CPE","CVE","EEE","ESM","LAW","MEE","MLS","NUR","PHT","QSV","SGI","URP"] and str(stud_obj['level']) == '400':
+        #         return False
+        #     return True
+        # else:
+        #     return False
     except:
         return False

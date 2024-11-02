@@ -83,7 +83,8 @@ async def get_random_available_room(stud_obj:dict,get_room_condition:dict, sessi
             return await backup_room_getter(stud_obj,health_block_counter, session)     
         
     elif get_room_condition['room_cat'] == "SPECIAL":
-        room_res = await query_db_for_random_room_in_quest_house(stud_obj, session)
+        # room_res = await query_db_for_random_room_in_quest_house(stud_obj, session)
+        room_res = await query_db_for_next_available_room_in_quest_house(stud_obj, session)
         if  room_res[0]:
             return True, admin_service_helper1.build_response_dict(room_res[1],RoomSchemaDetailed)
         else:
@@ -444,6 +445,35 @@ async def  query_db_for_random_room_in_quest_house(stud_obj, session):
     return True, room
 
 
+async def query_db_for_next_available_room_in_quest_house(stud_obj, session):
+    # Execute the query with ordering by RoomModel.id to get the next available room
+    res = await session.execute(
+        select(
+            RoomModel.id, RoomModel.room_name, RoomModel.capacity, RoomModel.num_space_occupied,
+            BlockModel.block_name, BlockModel.num_rooms_in_block, BlockModel.num_of_allocated_rooms,
+            BlockModel.gender, RoomModel.room_type, RoomModel.block_id, RoomModel.room_status, RoomModel.room_condition
+        )
+        .join(BlockModel, RoomModel.block_id == BlockModel.id)
+        .where(RoomModel.room_status == "AVAILABLE")
+        .where(RoomModel.room_condition == "GOOD")
+        .where(BlockModel.block_status == "AVAILABLE")
+        .where(
+            BlockModel.id.in_(
+                select(BlockProximityToFacultyModel.block_id)
+                .where(BlockProximityToFacultyModel.faculty == '14')
+            )
+        )
+        .where(BlockModel.gender == "F")
+        .with_for_update()
+        .order_by(RoomModel.id)  # Ordering by RoomModel.id instead of random
+        .limit(1)
+    )
+
+    room = res.fetchone()
+    if not room:
+        return False, {"message": f"No available room in quest house in {stud_obj['curr_session']} academic session"}
+    
+    return True, room
                                             
 
 async def get_percentage_of_allocation_in_health_blocks(sex, session):

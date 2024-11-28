@@ -94,7 +94,7 @@ async def get_all_occupied_rooms_from_selected_block_service(block_id:int, sessi
 @router.post("/random_assign_room_to_student_in_session")
 async def random_assign_room_to_student_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   user_meta = {"allocated_by": user["email"], "client": "ADMIN_DASHBOARD"}
-  res = await admin_service.get_stud_profile_and_randomly_assign_room_to_student_in_session_service(mat_no,user_meta,session)
+  res = await admin_service.get_stud_profile_and_randomly_assign_room_to_student_in_session_service(str(mat_no).strip(),user_meta,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
@@ -106,7 +106,7 @@ async def random_assign_room_to_student_in_session_func(mat_no:str, session: asy
 @router.post("/assign_room_in_specific_block_to_student_in_session")
 async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,block_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   user_meta = {"allocated_by": user["email"], "client": "ADMIN_DASHBOARD"}
-  res = await admin_service.assign_room_in_specific_block_to_student_in_session_service(mat_no,block_id,user_meta,session)
+  res = await admin_service.assign_room_in_specific_block_to_student_in_session_service(str(mat_no).strip(),block_id,user_meta,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
@@ -117,7 +117,7 @@ async def assign_room_in_specific_block_to_student_in_session_func(mat_no:str,bl
 @router.post("/assign_specific_space_in_room_to_student_in_session")
 async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,room_id:int, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   user_meta = {"allocated_by": user["email"], "client": "ADMIN_DASHBOARD"}
-  res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(mat_no,room_id,user_meta,session)
+  res = await admin_service.assign_specific_space_in_room_to_student_in_session_service(str(mat_no).strip(),room_id,user_meta,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1])  
   elif res[0]:
@@ -127,7 +127,7 @@ async def assign_specific_space_in_room_to_student_in_session_func(mat_no:str,ro
 # param: matric number
 @router.get("/get_student_room_in_session")
 async def get_student_room_in_session_func(mat_no:str,session_id:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(get_current_user)):
-  res = await admin_service.get_student_room_in_session_service(mat_no, session_id,session)
+  res = await admin_service.get_student_room_in_session_service(str(mat_no).strip(), session_id,session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:
@@ -137,7 +137,7 @@ async def get_student_room_in_session_func(mat_no:str,session_id:str, session: a
 
 @router.delete("/delete_student_from_room_in_session",description="Just a soft delete")
 async def delete_student_from_room_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
-  res = await admin_service.delete_student_from_room_in_session_service(mat_no, session)
+  res = await admin_service.delete_student_from_room_in_session_service(str(mat_no).strip(), session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 
   elif res[0]:

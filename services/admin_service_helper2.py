@@ -135,6 +135,8 @@ async def get_specific_available_space_in_room(in_data:dict, room_id:int,session
     
 async def room_allocation_service(stud_obj:dict,room_obj:dict,user_meta,session:async_sessionmaker):
     try:
+        if len(stud_obj['curr_session']) < 9:
+            return False, {"message":f"Error with the session {stud_obj['curr_session']} you are trying to log"}
         stud_obj['allocated_by'] = user_meta['allocated_by']
         stud_obj['client'] = user_meta['client']
         _allo_room = StudentModel(room_id=room_obj['id'],**stud_obj)

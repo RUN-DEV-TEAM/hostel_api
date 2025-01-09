@@ -1,4 +1,4 @@
-from fastapi import APIRouter,Depends, Body, Query, HTTPException
+from fastapi import APIRouter,Depends, Body, Query, HTTPException,Request
 from typing import List
 from schemas.userSchema import CreateUser,ReturnSignUpUser,ListUser
 from schemas.roomSchema import UpdateRoomSchema
@@ -134,9 +134,9 @@ async def get_student_room_in_session_func(mat_no:str,session_id:str, session: a
     return res[1]
 
 
-
-@router.delete("/delete_student_from_room_in_session",description="Just a soft delete")
-async def delete_student_from_room_in_session_func(mat_no:str, session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
+# , user: ReturnSignUpUser =Depends(require_permission())
+@router.post("/delete_student_from_room_in_session",description="Just a soft delete")
+async def delete_student_from_room_in_session_func(mat_no:str, request: Request ,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.delete_student_from_room_in_session_service(str(mat_no).strip(), session)
   if not res[0]:
     return JSONResponse(status_code=404, content=res[1]) 

@@ -13,7 +13,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan,description="RUN HOSTEL MANAGEMENT BACKEND APP") 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust this according to your needs
+    allow_origins=["http://172.21.22.242:3000"],  # Adjust this according to your needs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

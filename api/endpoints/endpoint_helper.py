@@ -17,6 +17,8 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/user/token")
 
 
+
+
 def require_permission():
     def permission_dependency(user: ReturnSignUpUser =Depends(get_current_user)):
         if not isinstance(user, dict):
@@ -63,6 +65,8 @@ async def get_current_user(token: str = Depends(oauth2_scheme),  session: async_
     if user is None:
         raise credential_exception
     return user[1]
+
+
 
 
 

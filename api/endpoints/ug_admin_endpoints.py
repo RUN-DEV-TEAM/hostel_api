@@ -135,7 +135,7 @@ async def get_student_room_in_session_func(mat_no:str,session_id:str, session: a
 
 
 # , user: ReturnSignUpUser =Depends(require_permission())
-@router.post("/delete_student_from_room_in_session",description="Just a soft delete")
+@router.delete("/delete_student_from_room_in_session",description="Just a soft delete")
 async def delete_student_from_room_in_session_func(mat_no:str, request: Request ,session: async_sessionmaker = Depends(get_session), user: ReturnSignUpUser =Depends(require_permission())):
   res = await admin_service.delete_student_from_room_in_session_service(str(mat_no).strip(), session)
   if not res[0]:
@@ -143,6 +143,8 @@ async def delete_student_from_room_in_session_func(mat_no:str, request: Request 
   elif res[0]:
     return res[1]
   
+
+
 
 
 @router.get("/list_students_in_room_in_session")

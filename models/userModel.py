@@ -85,6 +85,7 @@ class StudentModel(Base):
     firstname = Column(String(100), nullable=True)
     othernames = Column(String(100), nullable=True)
     sex = Column(String(1), nullable=True)
+    pic = Column(String(191), nullable=True)
     isFresher = Column(String(1), nullable=True)
     medical_attention = Column(Enum(MedicalAttention), default=MedicalAttention.NO)
     program = Column(String(100), nullable=True)
